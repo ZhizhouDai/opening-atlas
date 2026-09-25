@@ -182,7 +182,7 @@ const Repertoire = {
   renderTreePane() {
     this.nodeEls = renderTree(this.els.tree, this.opening.tree, {
       onSelect: (id) => this.selectNode(id),
-    });
+    }).nodeEls;
     this.highlightCursor();
   },
 

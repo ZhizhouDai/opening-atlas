@@ -1,21 +1,27 @@
-// "Study and Analysis" page controller: a read-only move tree on the left,
-// six independently-navigable boards on the right.
+// "Study and Analysis" page controller: a move tree on the left, a
+// variable number of independently-navigable boards on the right.
 
-const BOARD_COLORS = ['#4caf6e', '#5a9be0', '#e0605a', '#e0c95a', '#a06ae0', '#e08a3d'];
-const NUM_BOARDS = 6;
+const BOARD_COLORS = ['#4caf6e', '#5a9be0', '#e0605a', '#e0c95a', '#a06ae0', '#e08a3d', '#2dd4bf', '#e06aa8', '#a3d94c'];
+const DEFAULT_NUM_BOARDS = 6;
+const MIN_BOARDS = 1;
+const MAX_BOARDS = BOARD_COLORS.length;
 
 const Study = {
   color: 'white',
   openings: [],
   opening: null,
   activeBoardIdx: 0,
-  boardPaths: [], // NUM_BOARDS entries, each an array of child indices from root
+  boardPaths: [], // one entry per board, each an array of child indices from root
   annotations: {}, // nodeId -> {arrows:[], circles:[], text:''}
-  boards: [], // Board instances
+  headings: {}, // nodeId -> {text, level}
+  collapsedComments: null, // Set<key>, session-only reading aid
+  boards: [], // Board instances, parallel to boardPaths
   nodeEls: new Map(),
+  commentKeys: [],
   dirty: false,
 
   async init() {
+    this.collapsedComments = new Set();
     this.els = {
       colorTabs: document.getElementById('studyColorTabs'),
       select: document.getElementById('studyOpeningSelect'),
@@ -25,6 +31,9 @@ const Study = {
       grid: document.getElementById('studyBoardGrid'),
       btnSave: document.getElementById('btnSaveStudy'),
       saveStatus: document.getElementById('studySaveStatus'),
+      btnToggleComments: document.getElementById('btnToggleComments'),
+      btnAddBoard: document.getElementById('btnAddBoard'),
+      boardCountLabel: document.getElementById('boardCountLabel'),
     };
 
     this.els.colorTabs.addEventListener('click', (e) => {
@@ -34,16 +43,18 @@ const Study = {
     });
     this.els.select.addEventListener('change', () => this.selectOpening(this.els.select.value));
     this.els.btnSave.addEventListener('click', () => this.save());
+    this.els.btnToggleComments.addEventListener('click', () => this.toggleAllComments());
+    this.els.btnAddBoard.addEventListener('click', () => this.addBoard());
 
-    this.buildBoardGrid();
     await this.loadOpenings();
   },
 
   buildBoardGrid() {
+    const orientation = this.opening && this.opening.color === 'black' ? 'b' : 'w';
     this.els.grid.innerHTML = '';
     this.boards = [];
-    for (let i = 0; i < NUM_BOARDS; i++) {
-      const color = BOARD_COLORS[i];
+    for (let i = 0; i < this.boardPaths.length; i++) {
+      const color = BOARD_COLORS[i % BOARD_COLORS.length];
       const panel = document.createElement('div');
       panel.className = 'study-board-panel';
       panel.dataset.idx = i;
@@ -55,6 +66,7 @@ const Study = {
             <button type="button" class="btn btn-ghost tiny" data-act="prev" title="Previous move">&#9664;</button>
             <button type="button" class="btn btn-ghost tiny" data-act="next" title="Next move">&#9654;</button>
             <button type="button" class="btn btn-ghost tiny" data-act="reset" title="Back to start">&#8634;</button>
+            <button type="button" class="board-close-btn" data-act="close" title="Remove this board">&times;</button>
           </div>
         </div>
         <div class="board-mount board-mini" data-mount></div>
@@ -78,12 +90,13 @@ const Study = {
         onSelect: () => this.setActiveBoard(i),
         onAnnotate: (a) => this.onAnnotate(i, a),
       });
-      board.orientation = 'w';
+      board.orientation = orientation;
       this.boards.push(board);
 
       panel.querySelector('[data-act="prev"]').addEventListener('click', () => { this.setActiveBoard(i); this.stepBoard(i, -1); });
       panel.querySelector('[data-act="next"]').addEventListener('click', (e) => { this.setActiveBoard(i); this.stepBoard(i, 1, e.currentTarget); });
       panel.querySelector('[data-act="reset"]').addEventListener('click', () => { this.setActiveBoard(i); this.setBoardPath(i, []); });
+      panel.querySelector('[data-act="close"]').addEventListener('click', () => this.removeBoard(i));
       panel.querySelectorAll('[data-anno-colors] button').forEach((b) => {
         b.addEventListener('click', () => {
           this.setActiveBoard(i);
@@ -105,6 +118,42 @@ const Study = {
       panel.querySelectorAll('[data-anno-colors] button')[0].classList.add('active');
       panel.addEventListener('mousedown', () => this.setActiveBoard(i));
     }
+    this.updateBoardChrome();
+  },
+
+  updateBoardChrome() {
+    const n = this.boardPaths.length;
+    this.els.boardCountLabel.textContent = `${n} board${n === 1 ? '' : 's'}`;
+    this.els.btnAddBoard.disabled = n >= MAX_BOARDS;
+    [...this.els.grid.children].forEach((panel) => {
+      const closeBtn = panel.querySelector('[data-act="close"]');
+      closeBtn.hidden = n <= MIN_BOARDS;
+    });
+  },
+
+  // Rebuilds every board panel for the current boardPaths, then restores
+  // each board's position/annotations. Used after switching openings and
+  // after adding/removing a board.
+  rebuildBoards() {
+    this.buildBoardGrid();
+    for (let i = 0; i < this.boardPaths.length; i++) this.renderBoard(i);
+    this.updateActiveIndicator();
+    this.updateAllHighlights();
+  },
+
+  addBoard() {
+    if (this.boardPaths.length >= MAX_BOARDS) return;
+    this.boardPaths.push([]);
+    this.markDirty();
+    this.rebuildBoards();
+  },
+
+  removeBoard(i) {
+    if (this.boardPaths.length <= MIN_BOARDS) return;
+    this.boardPaths.splice(i, 1);
+    if (this.activeBoardIdx >= this.boardPaths.length) this.activeBoardIdx = this.boardPaths.length - 1;
+    this.markDirty();
+    this.rebuildBoards();
   },
 
   setColor(color) {
@@ -155,27 +204,62 @@ const Study = {
     this.showEmptyState();
     if (!this.opening) return;
 
-    const orientation = this.opening.color === 'black' ? 'b' : 'w';
-    this.boards.forEach((b) => { b.orientation = orientation; });
-
     const saved = await DB.studyState.get(id);
-    this.boardPaths = (saved && saved.boards) ? saved.boards.map((b) => b.path || []) : Array.from({ length: NUM_BOARDS }, () => []);
-    while (this.boardPaths.length < NUM_BOARDS) this.boardPaths.push([]);
+    this.boardPaths = (saved && saved.boards && saved.boards.length)
+      ? saved.boards.map((b) => b.path || [])
+      : Array.from({ length: DEFAULT_NUM_BOARDS }, () => []);
     this.annotations = (saved && saved.annotations) ? saved.annotations : {};
+    this.headings = (saved && saved.headings) ? saved.headings : {};
+    this.collapsedComments = new Set();
     this.activeBoardIdx = 0;
     this.dirty = false;
     this.updateSaveStatus();
 
     this.renderTreePane();
-    for (let i = 0; i < NUM_BOARDS; i++) this.renderBoard(i);
-    this.updateActiveIndicator();
+    this.rebuildBoards();
   },
 
   renderTreePane() {
-    this.nodeEls = renderTree(this.els.tree, this.opening.tree, {
+    const result = renderTree(this.els.tree, this.opening.tree, {
       onSelect: (id) => this.jumpActiveBoardTo(id),
+      headings: this.headings,
+      onHeadingContext: (id) => this.openHeadingEditor(id),
+      collapsedComments: this.collapsedComments,
+      onToggleComment: (key) => this.toggleComment(key),
     });
+    this.nodeEls = result.nodeEls;
+    this.commentKeys = result.commentKeys;
     this.updateAllHighlights();
+    this.updateCollapseButtonLabel();
+  },
+
+  async openHeadingEditor(nodeId) {
+    const existing = this.headings[nodeId];
+    const result = await modalHeadingEditor(existing);
+    if (result === undefined) return;
+    if (result === null) delete this.headings[nodeId];
+    else this.headings[nodeId] = result;
+    this.markDirty();
+    this.renderTreePane();
+  },
+
+  toggleComment(key) {
+    if (this.collapsedComments.has(key)) this.collapsedComments.delete(key);
+    else this.collapsedComments.add(key);
+    this.renderTreePane();
+  },
+
+  toggleAllComments() {
+    const allCollapsed = this.commentKeys.length > 0 && this.commentKeys.every((k) => this.collapsedComments.has(k));
+    if (allCollapsed) this.collapsedComments.clear();
+    else this.commentKeys.forEach((k) => this.collapsedComments.add(k));
+    this.renderTreePane();
+  },
+
+  updateCollapseButtonLabel() {
+    const allCollapsed = this.commentKeys.length > 0 && this.commentKeys.every((k) => this.collapsedComments.has(k));
+    this.els.btnToggleComments.textContent = allCollapsed ? 'Expand comments' : 'Collapse comments';
+    this.els.btnToggleComments.disabled = this.commentKeys.length === 0;
   },
 
   currentNodeId(i) {
@@ -272,14 +356,14 @@ const Study = {
       el.classList.remove('active-ply');
       el.querySelector('.ply-dots').innerHTML = '';
     });
-    for (let i = 0; i < NUM_BOARDS; i++) {
+    for (let i = 0; i < this.boardPaths.length; i++) {
       const nodeId = this.currentNodeId(i);
       const el = this.nodeEls.get(nodeId);
       if (!el) continue;
       if (i === this.activeBoardIdx) el.classList.add('active-ply');
       const dot = document.createElement('span');
       dot.className = 'board-dot';
-      dot.style.background = BOARD_COLORS[i];
+      dot.style.background = BOARD_COLORS[i % BOARD_COLORS.length];
       dot.title = `Board ${i + 1}`;
       el.querySelector('.ply-dots').appendChild(dot);
     }
@@ -309,6 +393,7 @@ const Study = {
       openingId: this.opening.id,
       boards: this.boardPaths.map((path) => ({ path })),
       annotations: this.annotations,
+      headings: this.headings,
       updatedAt: Date.now(),
     };
     await DB.studyState.put(record);

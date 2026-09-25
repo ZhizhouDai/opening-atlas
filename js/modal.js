@@ -37,6 +37,50 @@ function modalPrompt(message, defaultValue) {
   });
 }
 
+// Resolves to {text, level} to save/update, null to remove an existing
+// heading, or undefined if cancelled.
+function modalHeadingEditor(existing) {
+  return new Promise((resolve) => {
+    const { overlay, box } = _buildOverlay();
+    box.innerHTML = `
+      <p class="modal-message">Label this move, e.g. "Schmidt Variation"</p>
+      <input type="text" class="modal-input" placeholder="Heading text" />
+      <div class="modal-level-row">
+        <button type="button" class="btn btn-ghost level-btn" data-level="1">Heading</button>
+        <button type="button" class="btn btn-ghost level-btn" data-level="2">Subheading</button>
+      </div>
+      <div class="modal-actions">
+        ${existing ? '<button type="button" class="btn btn-ghost danger" data-act="remove">Remove</button>' : ''}
+        <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" data-act="ok">Save</button>
+      </div>
+    `;
+    const input = box.querySelector('.modal-input');
+    input.value = existing ? existing.text : '';
+    let level = existing && existing.level === 2 ? 2 : 1;
+    const levelBtns = [...box.querySelectorAll('.level-btn')];
+    const syncLevel = () => levelBtns.forEach((b) => b.classList.toggle('active', Number(b.dataset.level) === level));
+    syncLevel();
+    levelBtns.forEach((b) => b.addEventListener('click', () => { level = Number(b.dataset.level); syncLevel(); }));
+
+    const close = (result) => { overlay.remove(); resolve(result); };
+    box.querySelector('[data-act="cancel"]').addEventListener('click', () => close(undefined));
+    const removeBtn = box.querySelector('[data-act="remove"]');
+    if (removeBtn) removeBtn.addEventListener('click', () => close(null));
+    const save = () => {
+      const text = input.value.trim();
+      close(text ? { text, level } : undefined);
+    };
+    box.querySelector('[data-act="ok"]').addEventListener('click', save);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') save();
+      if (e.key === 'Escape') close(undefined);
+    });
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(undefined); });
+    requestAnimationFrame(() => { input.focus(); input.select(); });
+  });
+}
+
 function modalConfirm(message, opts = {}) {
   return new Promise((resolve) => {
     const { overlay, box } = _buildOverlay();

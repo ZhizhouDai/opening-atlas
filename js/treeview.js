@@ -3,24 +3,37 @@
 // line (nothing to distinguish it from), but the moment a node has more
 // than one child, every child — including what would elsewhere be called
 // "the main move" — becomes its own equally-indented continuation. None of
-// them stays inline while the others get demoted into parentheses.
+// them stays inline while the others get demoted into parentheses. A move
+// that carries a heading also always starts its own line, even if it isn't
+// itself a branch point, since a named line deserves a visual break.
 
 const MARK_GLYPHS = ['', '!', '!!', '!?', '?!', '?', '??'];
 const MARK_COLORS = ['none', 'green', 'red', 'blue', 'yellow', 'orange', 'purple'];
 
-// Builds the DOM for `rootNode` into `container`. Returns a Map of
-// nodeId -> the <span class="ply"> element, so callers can cheaply update
-// selection/highlight classes without a full rebuild.
+// Builds the DOM for `rootNode` into `container`. Returns
+// { nodeEls, commentKeys }: nodeEls maps nodeId -> the <span class="ply">
+// element (so callers can cheaply update selection/highlight classes
+// without a full rebuild), commentKeys lists every comment's collapse key
+// currently present in the tree.
+//
+// opts:
+//   onSelect(nodeId)                     — click a move
+//   headings: { [nodeId]: {text,level} } — optional, Study page only
+//   onHeadingContext(nodeId)             — right-click a move to edit its heading
+//   collapsedComments: Set<key>          — optional, Study page only
+//   onToggleComment(key)                 — click a comment to collapse/expand it
 function renderTree(container, rootNode, opts = {}) {
   const onSelect = opts.onSelect;
+  const headings = opts.headings || {};
+  const onHeadingContext = opts.onHeadingContext;
+  const collapsedComments = opts.collapsedComments;
+  const onToggleComment = opts.onToggleComment;
   const nodeEls = new Map();
+  const commentKeys = [];
   container.innerHTML = '';
 
   if (rootNode.commentAfter) {
-    const intro = document.createElement('div');
-    intro.className = 'tree-comment tree-intro';
-    intro.textContent = rootNode.commentAfter;
-    container.appendChild(intro);
+    appendComment(container, 'root:after', rootNode.commentAfter, true);
   }
 
   if (!rootNode.children.length) {
@@ -28,22 +41,46 @@ function renderTree(container, rootNode, opts = {}) {
     empty.className = 'muted tree-empty';
     empty.textContent = 'No moves yet. Play a move on the board, or import a PGN.';
     container.appendChild(empty);
-    return nodeEls;
+    return { nodeEls, commentKeys };
   }
 
   const rootLine = document.createElement('div');
   rootLine.className = 'move-line';
   container.appendChild(rootLine);
   walk(rootLine, rootNode);
-  return nodeEls;
+  return { nodeEls, commentKeys };
+
+  function appendComment(parentEl, key, text, isIntro) {
+    commentKeys.push(key);
+    const c = document.createElement(isIntro ? 'div' : 'span');
+    c.className = 'tree-comment' + (isIntro ? ' tree-intro' : '');
+    const collapsed = collapsedComments && collapsedComments.has(key);
+    if (collapsed) {
+      c.classList.add('collapsed');
+      c.textContent = '💬';
+      c.title = text;
+    } else {
+      c.textContent = text;
+    }
+    if (onToggleComment) {
+      c.classList.add('toggleable');
+      c.title = collapsed ? text : 'Click to collapse';
+      c.addEventListener('click', (e) => { e.stopPropagation(); onToggleComment(key); });
+    }
+    parentEl.appendChild(c);
+  }
+
+  function appendHeading(parentEl, nodeId) {
+    const heading = headings[nodeId];
+    if (!heading || !heading.text) return;
+    const h = document.createElement('div');
+    h.className = 'tree-heading level-' + (heading.level === 2 ? 2 : 1);
+    h.textContent = heading.text;
+    parentEl.appendChild(h);
+  }
 
   function appendMoveToken(lineEl, node, forceLabel) {
-    if (node.commentBefore) {
-      const c = document.createElement('span');
-      c.className = 'tree-comment';
-      c.textContent = node.commentBefore;
-      lineEl.appendChild(c);
-    }
+    if (node.commentBefore) appendComment(lineEl, node.id + ':before', node.commentBefore);
     if (node.ply % 2 === 1) {
       const num = document.createElement('span');
       num.className = 'move-num';
@@ -68,37 +105,44 @@ function renderTree(container, rootNode, opts = {}) {
     if (node.markColor && node.markColor !== 'none') span.classList.add('mark-' + node.markColor);
     if (node.markGlyph) span.classList.add('has-glyph');
     if (onSelect) span.addEventListener('click', () => onSelect(node.id));
+    if (onHeadingContext) {
+      span.classList.add('headable');
+      span.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        onHeadingContext(node.id);
+      });
+    }
     lineEl.appendChild(span);
     nodeEls.set(node.id, span);
 
-    if (node.commentAfter) {
-      const c = document.createElement('span');
-      c.className = 'tree-comment';
-      c.textContent = node.commentAfter;
-      lineEl.appendChild(c);
-    }
+    if (node.commentAfter) appendComment(lineEl, node.id + ':after', node.commentAfter);
+  }
+
+  // Appends `child` as the start of its own indented line (with its
+  // heading, if any, above it), then keeps walking its own descendants.
+  function startNewLine(parentLineEl, child) {
+    const wrap = document.createElement('div');
+    wrap.className = 'continuation';
+    appendHeading(wrap, child.id);
+    const line = document.createElement('div');
+    line.className = 'move-line';
+    appendMoveToken(line, child, true);
+    wrap.appendChild(line);
+    walk(line, child);
+    parentLineEl.appendChild(wrap);
   }
 
   function walk(lineEl, startNode) {
     let cur = startNode;
-    // A single child is simply the next move in an unbranched line — no
-    // choice is being made, so it continues on the same line.
-    while (cur.children && cur.children.length === 1) {
+    while (cur.children && cur.children.length === 1 && !headings[cur.children[0].id]) {
       appendMoveToken(lineEl, cur.children[0], false);
       cur = cur.children[0];
     }
-    if (!cur.children || cur.children.length < 2) return;
-    // Two or more children: every one of them is an equal continuation from
-    // here, each gets its own indented line.
-    cur.children.forEach((child) => {
-      const contWrap = document.createElement('div');
-      contWrap.className = 'continuation';
-      const contLine = document.createElement('div');
-      contLine.className = 'move-line';
-      appendMoveToken(contLine, child, true);
-      contWrap.appendChild(contLine);
-      walk(contLine, child);
-      lineEl.appendChild(contWrap);
-    });
+    if (!cur.children || !cur.children.length) return;
+    if (cur.children.length === 1) {
+      startNewLine(lineEl, cur.children[0]);
+      return;
+    }
+    cur.children.forEach((child) => startNewLine(lineEl, child));
   }
 }

@@ -130,9 +130,9 @@
 
   <!-- STUDY & ANALYSIS VIEW -->
   <section id="view-study" class="view">
-    <div class="panel intro-panel">
-      <h1 class="page-title">Study &amp; analysis.</h1>
-      <p class="page-sub">Pick a position on any of the six boards, click a ply in the notation to jump there, and annotate with arrows, circles, and notes.</p>
+    <div class="panel intro-panel study-intro-panel">
+      <h1 class="page-title small">Study &amp; analysis.</h1>
+      <p class="page-sub">Pick a position to analyze.</p>
     </div>
 
     <div class="study-toolbar panel">
@@ -153,11 +153,20 @@
 
     <div id="studyWorkspace" class="study-layout" hidden>
       <div class="panel study-tree-panel">
-        <h3 class="panel-title small-title">Notation</h3>
-        <p class="muted small-note">Click a board to make it active, then click a ply to jump there. Each board's position is shown as a colored dot on the tree.</p>
+        <div class="tree-panel-header">
+          <h3 class="panel-title small-title">Notation</h3>
+          <button id="btnToggleComments" class="btn btn-ghost tiny">Collapse comments</button>
+        </div>
+        <p class="muted small-note">Click a board, then a ply, to jump there. Right-click a move to add a heading.</p>
         <div class="tree-scroll" id="studyTree"></div>
       </div>
-      <div class="study-board-grid" id="studyBoardGrid"></div>
+      <div class="study-boards-col">
+        <div class="board-grid-toolbar">
+          <span class="muted" id="boardCountLabel"></span>
+          <button id="btnAddBoard" class="btn btn-ghost small">+ Add board</button>
+        </div>
+        <div class="study-board-grid" id="studyBoardGrid"></div>
+      </div>
     </div>
   </section>
 

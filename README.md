@@ -28,24 +28,30 @@ on your PC gives you two separate, independent libraries.
 
 ### Study & Analysis
 
-- The full move tree is rendered as a clear, indented outline — mainline
-  moves run inline, and every branch opens its own indented line so it's
-  obvious exactly where a line diverges.
-- Six independent boards on the right. Click a board to make it active,
-  then click any move in the notation to jump that board there — the move
-  gets a colored dot for every board currently sitting on it.
+- The full move tree is rendered as a clear, indented outline with no
+  privileged "mainline" — the instant a position branches, every
+  continuation gets its own equally-indented line, so it's obvious exactly
+  where and how a line diverges.
+- Right-click any move to label it with a heading or subheading (e.g.
+  "Rossolimo Variation") in a gold accent color that stands out from the
+  moves themselves. Comments can be collapsed individually (click one) or
+  all at once, to keep a long tree scannable.
+- A variable number of independent boards (1–9, add/remove freely) on the
+  right. Click a board to make it active, then click any move in the
+  notation to jump that board there — the move gets a colored dot for every
+  board currently sitting on it.
 - Each board has its own **◀ / ▶** controls to step through the line; at a
   branch point, **▶** asks which continuation to follow.
 - Right-click-drag to draw an arrow, right-click a square to circle it —
-  any of six colors — and add a free-text note. All of it (which position
-  each board shows, every arrow/circle/note) is kept in memory until you
-  hit **Save**, which persists it for next time.
+  any of six colors — and add a free-text note. All of it (board count,
+  which position each board shows, every arrow/circle/note/heading) is kept
+  in memory until you hit **Save**, which persists it for next time.
 
 ## Design
 
 Flat, dark-green themed UI (Fraunces for headings, Inter for everything
 else) built with no framework and no build step — plain HTML/CSS/JS,
-chess.js for rules, and the cburnett piece set.
+chess.js for rules, and the Kosal piece set.
 
 ## Running a local copy
 
