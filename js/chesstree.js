@@ -104,6 +104,61 @@ function deleteNode(root, id) {
   return true;
 }
 
+// Swaps `nodeId` with its previous (direction -1) or next (direction +1)
+// sibling — reordering which continuation appears first/later at a branch
+// point. Returns {parent, fromIndex, toIndex} on success, or null if there's
+// no sibling in that direction (already first/last, or no parent at all).
+function swapSibling(root, nodeId, direction) {
+  const parent = findParent(root, nodeId);
+  if (!parent) return null;
+  const fromIndex = parent.children.findIndex((c) => c.id === nodeId);
+  const toIndex = fromIndex + direction;
+  if (fromIndex === -1 || toIndex < 0 || toIndex >= parent.children.length) return null;
+  const tmp = parent.children[fromIndex];
+  parent.children[fromIndex] = parent.children[toIndex];
+  parent.children[toIndex] = tmp;
+  return { parent, fromIndex, toIndex };
+}
+
+// Given index-paths from root (e.g. saved Study board positions), returns
+// equivalent paths that still point at the same logical moves after a
+// swapSibling() reorder — swapping fromIndex/toIndex wherever a path passes
+// through `parent` at that depth.
+function remapPathsForSwap(root, paths, parent, fromIndex, toIndex) {
+  const parentPath = pathToNode(root, parent.id);
+  if (!parentPath) return paths;
+  const depth = parentPath.length;
+  return paths.map((path) => {
+    if (path.length <= depth) return path;
+    for (let d = 0; d < depth; d++) if (path[d] !== parentPath[d]) return path;
+    if (path[depth] === fromIndex) return [...path.slice(0, depth), toIndex, ...path.slice(depth + 1)];
+    if (path[depth] === toIndex) return [...path.slice(0, depth), fromIndex, ...path.slice(depth + 1)];
+    return path;
+  });
+}
+
+// Reorders `nodeId` among its siblings (direction -1 = up/earlier, +1 =
+// down/later), then keeps any saved Study board positions — both the
+// persisted copy in IndexedDB and the live Study page, if it currently has
+// this same opening open — pointing at the same logical moves afterward.
+// Returns true if a swap happened.
+async function reorderPly(opening, nodeId, direction) {
+  const swap = swapSibling(opening.tree, nodeId, direction);
+  if (!swap) return false;
+  const saved = await DB.studyState.get(opening.id);
+  if (saved && saved.boards && saved.boards.length) {
+    const paths = remapPathsForSwap(opening.tree, saved.boards.map((b) => b.path || []), swap.parent, swap.fromIndex, swap.toIndex);
+    saved.boards = paths.map((path) => ({ path }));
+    await DB.studyState.put(saved);
+  }
+  if (typeof Study !== 'undefined' && Study.opening && Study.opening.id === opening.id) {
+    Study.boardPaths = remapPathsForSwap(opening.tree, Study.boardPaths, swap.parent, swap.fromIndex, swap.toIndex);
+    for (let i = 0; i < Study.boardPaths.length; i++) Study.renderBoard(i);
+    Study.updateAllHighlights();
+  }
+  return true;
+}
+
 // Adds a played move under `cursor`, reusing an existing child with the same
 // SAN instead of creating a duplicate branch (used by both board play and
 // PGN import/merge).

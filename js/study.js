@@ -229,18 +229,27 @@ const Study = {
     this.updateCollapseButtonLabel();
   },
 
-  // Heading/bold/boxed live on the node itself (see chesstree.js), so this
-  // saves straight to the opening record — not gated behind the study
+  // Heading/bold/boxed/order live on the node itself (see chesstree.js), so
+  // this saves straight to the opening record — not gated behind the study
   // page's own Save button — and is immediately visible on the Create
   // Repertoire page too.
   async openPlyStyleEditor(nodeId) {
     const node = findNode(this.opening.tree, nodeId);
+    const parent = findParent(this.opening.tree, nodeId);
+    const idx = parent ? parent.children.indexOf(node) : -1;
     const existing = (node.heading || node.bold || node.boxed)
       ? { heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed }
       : null;
-    const result = await modalPlyStyleEditor(existing);
+    const result = await modalPlyStyleEditor(existing, {
+      canMoveUp: idx > 0,
+      canMoveDown: parent ? idx < parent.children.length - 1 : false,
+    });
     if (result === undefined) return;
-    applyPlyStyle(node, result);
+    if (result && result.reorder) {
+      await reorderPly(this.opening, nodeId, result.reorder);
+    } else {
+      applyPlyStyle(node, result);
+    }
     this.opening.updatedAt = Date.now();
     await DB.openings.put(this.opening);
     this.renderTreePane();

@@ -26,10 +26,12 @@ on your PC gives you two separate, independent libraries.
 - Mark any move with a color (green/red/blue/yellow/orange/purple) and an
   icon (!, !!, !?, ?!, ?, ??) — both shown right in the move list.
 - Right-click any move to label it with a heading or subheading (e.g.
-  "Rossolimo Variation") in a gold accent color, and/or bold or box it for
-  emphasis — the same right-click editor as on the Study & Analysis page,
-  since heading/bold/box live on the move itself and show up on both pages
-  immediately, with no separate save step.
+  "Rossolimo Variation") in a gold accent color, bold or box it for
+  emphasis, and reorder it earlier/later among its sibling continuations —
+  the same right-click editor as on the Study & Analysis page, since all of
+  this lives on the move itself and shows up on both pages immediately,
+  with no separate save step. Reordering keeps any saved Study board
+  positions pointed at the same moves, wherever they land in the new order.
 - Export PGN: copy the current opening to the clipboard, download it as a
   `.pgn` file, or download every opening for the selected color as one
   multi-game PGN file.

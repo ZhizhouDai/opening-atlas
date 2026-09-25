@@ -38,12 +38,19 @@ function modalPrompt(message, defaultValue) {
 }
 
 // Edits a single move's styling: an optional heading/subheading label, plus
-// independent bold and boxed emphasis toggles. Resolves to
-// {heading, level, bold, boxed} to save, null to clear everything, or
+// independent bold and boxed emphasis toggles, plus (when the move has
+// siblings — other continuations at the same branch point) reordering it
+// earlier or later among them. Resolves to {heading, level, bold, boxed} to
+// save, {reorder: -1 | 1} to move the ply up/down among its siblings
+// (applied immediately, closing the dialog), null to clear everything, or
 // undefined if cancelled.
-function modalPlyStyleEditor(existing) {
+//
+// opts: { canMoveUp, canMoveDown } — whether a sibling exists in that
+// direction; the "Order" section is omitted entirely when neither applies.
+function modalPlyStyleEditor(existing, opts = {}) {
   return new Promise((resolve) => {
     const { overlay, box } = _buildOverlay();
+    const showOrder = opts.canMoveUp || opts.canMoveDown;
     box.innerHTML = `
       <p class="modal-message">Label or style this move</p>
       <input type="text" class="modal-input" placeholder="Heading text, e.g. &quot;Schmidt Variation&quot;" />
@@ -56,6 +63,12 @@ function modalPlyStyleEditor(existing) {
         <button type="button" class="btn btn-ghost level-btn" data-style="bold"><b>Bold</b></button>
         <button type="button" class="btn btn-ghost level-btn" data-style="boxed">Box</button>
       </div>
+      ${showOrder ? `
+      <p class="modal-section-label">Order among continuations</p>
+      <div class="modal-btn-row">
+        <button type="button" class="btn btn-ghost" data-act="move-up" ${opts.canMoveUp ? '' : 'disabled'}>&#8593; Move up</button>
+        <button type="button" class="btn btn-ghost" data-act="move-down" ${opts.canMoveDown ? '' : 'disabled'}>&#8595; Move down</button>
+      </div>` : ''}
       <div class="modal-actions">
         ${existing ? '<button type="button" class="btn btn-ghost danger" data-act="remove">Clear</button>' : ''}
         <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
@@ -84,6 +97,10 @@ function modalPlyStyleEditor(existing) {
     box.querySelector('[data-act="cancel"]').addEventListener('click', () => close(undefined));
     const removeBtn = box.querySelector('[data-act="remove"]');
     if (removeBtn) removeBtn.addEventListener('click', () => close(null));
+    const moveUpBtn = box.querySelector('[data-act="move-up"]');
+    const moveDownBtn = box.querySelector('[data-act="move-down"]');
+    if (moveUpBtn) moveUpBtn.addEventListener('click', () => close({ reorder: -1 }));
+    if (moveDownBtn) moveDownBtn.addEventListener('click', () => close({ reorder: 1 }));
     const save = () => {
       const heading = input.value.trim();
       close((heading || bold || boxed) ? { heading, level, bold, boxed } : null);

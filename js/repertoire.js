@@ -183,16 +183,25 @@ const Repertoire = {
     this.highlightCursor();
   },
 
-  // Heading/bold/boxed live on the node itself (see chesstree.js), so
+  // Heading/bold/boxed/order live on the node itself (see chesstree.js), so
   // editing them here shows up immediately on the Study & Analysis page too.
   async openPlyStyleEditor(nodeId) {
     const node = findNode(this.opening.tree, nodeId);
+    const parent = findParent(this.opening.tree, nodeId);
+    const idx = parent ? parent.children.indexOf(node) : -1;
     const existing = (node.heading || node.bold || node.boxed)
       ? { heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed }
       : null;
-    const result = await modalPlyStyleEditor(existing);
+    const result = await modalPlyStyleEditor(existing, {
+      canMoveUp: idx > 0,
+      canMoveDown: parent ? idx < parent.children.length - 1 : false,
+    });
     if (result === undefined) return;
-    applyPlyStyle(node, result);
+    if (result && result.reorder) {
+      await reorderPly(this.opening, nodeId, result.reorder);
+    } else {
+      applyPlyStyle(node, result);
+    }
     await this.persist();
     this.renderTreePane();
   },
