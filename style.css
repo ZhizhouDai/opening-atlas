@@ -101,8 +101,8 @@ main { max-width: 1320px; margin: 0 auto; padding: 32px 40px 80px; }
 .page-title { font-size: 32px; letter-spacing: -0.01em; }
 .page-title.small { font-size: 22px; }
 .page-sub { color: var(--ink-soft); max-width: 620px; margin-top: 8px; }
-.study-intro-panel { padding: 0 4px 4px; margin-bottom: 12px; }
-.study-intro-panel .page-sub { margin-top: 2px; }
+.compact-intro-panel { padding: 0 4px 4px; margin-bottom: 12px; }
+.compact-intro-panel .page-sub { margin-top: 2px; }
 .panel-title { font-size: 19px; }
 .panel-title.small-title { font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); font-family: 'Inter', sans-serif; font-weight: 600; margin-bottom: 12px; }
 
@@ -241,10 +241,22 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 }
 .glyph-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 
-/* ---------- Create Repertoire layout ---------- */
+/* ---------- shared page toolbar (color tabs + opening picker + actions) ---------- */
 
-.rep-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
-.rep-sidebar { position: sticky; top: 92px; }
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  margin-bottom: 16px;
+}
+.page-toolbar .color-tabs { gap: 4px; }
+.page-toolbar .color-tab { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+.page-toolbar select { max-width: 260px; padding: 7px 10px; font-size: 13px; }
+.page-toolbar .btn-primary { padding: 7px 14px; font-size: 13px; }
+.page-toolbar-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
 .color-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
 .color-tab {
   flex: 1;
@@ -259,38 +271,23 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 }
 .color-tab.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
-.opening-list { list-style: none; margin: 0 0 6px; padding: 0; max-height: 46vh; overflow-y: auto; }
-
-/* Themed scrollbars for the app's own scrollable panes, so they match the
-   dark-green flat design instead of the OS/browser default. Firefox picks
-   up scrollbar-color; Chromium-based browsers use the ::-webkit- rules. */
-.opening-list, .tree-scroll {
+/* Themed scrollbar for the notation panel, so it matches the dark-green
+   flat design instead of the OS/browser default. Firefox picks up
+   scrollbar-color; Chromium-based browsers use the ::-webkit- rules. */
+.tree-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--ink-faint) transparent;
 }
-.opening-list::-webkit-scrollbar, .tree-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
-.opening-list::-webkit-scrollbar-track, .tree-scroll::-webkit-scrollbar-track { background: transparent; }
-.opening-list::-webkit-scrollbar-thumb, .tree-scroll::-webkit-scrollbar-thumb {
+.tree-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.tree-scroll::-webkit-scrollbar-track { background: transparent; }
+.tree-scroll::-webkit-scrollbar-thumb {
   background: var(--ink-faint);
   border-radius: 999px;
   border: 2px solid var(--bg-panel);
 }
-.opening-list::-webkit-scrollbar-thumb:hover, .tree-scroll::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
-.opening-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-}
-.opening-item:hover { background: var(--bg-panel-2); }
-.opening-item.active { background: var(--accent-soft); }
-.opening-item.active .opening-item-name { color: var(--accent); font-weight: 600; }
-.opening-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.opening-item-count { font-size: 12px; flex-shrink: 0; }
-.opening-list-empty { padding: 10px; font-size: 13px; }
+.tree-scroll::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+/* ---------- Create Repertoire layout ---------- */
 
 .rep-header-panel { padding-bottom: 16px; }
 .rep-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -354,18 +351,6 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 
 /* ---------- Study & Analysis layout ---------- */
 
-.study-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 10px 18px;
-  margin-bottom: 16px;
-}
-.study-toolbar .color-tabs { gap: 4px; }
-.study-toolbar .color-tab { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
-.study-toolbar select { max-width: 260px; padding: 7px 10px; font-size: 13px; }
-.study-toolbar .btn-primary { padding: 7px 14px; font-size: 13px; }
 .study-save-row { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 .save-status { font-size: 12px; color: var(--ink-soft); }
 .save-status.dirty { color: #e8d476; font-weight: 600; }
@@ -479,8 +464,6 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 
 @media (max-width: 980px) {
   main { padding: 20px 16px 60px; }
-  .rep-layout { grid-template-columns: 1fr; }
-  .rep-sidebar { position: static; }
   .rep-workspace-grid { grid-template-columns: 1fr; }
   .study-layout { grid-template-columns: 1fr; }
   .study-tree-panel { position: static; }
@@ -491,6 +474,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   .tabs { display: none; }
   .nav-select { display: block; font-size: 14px; padding: 8px 10px; width: auto; }
   .study-board-grid { grid-template-columns: 1fr; }
-  .study-toolbar { flex-direction: column; align-items: stretch; }
+  .page-toolbar { flex-direction: column; align-items: stretch; }
   .study-save-row { margin-left: 0; justify-content: space-between; }
+  .page-toolbar-actions { margin-left: 0; justify-content: space-between; }
 }

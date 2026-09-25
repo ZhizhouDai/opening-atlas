@@ -36,101 +36,100 @@
 
   <!-- CREATE REPERTOIRE VIEW -->
   <section id="view-repertoire" class="view active">
-    <div class="panel intro-panel">
-      <h1 class="page-title">Build your repertoire.</h1>
+    <div class="panel intro-panel compact-intro-panel">
+      <h1 class="page-title small">Build your repertoire.</h1>
       <p class="page-sub">Organize openings by color, play out lines on the board, import PGNs, and annotate every move with comments and marks.</p>
     </div>
 
-    <div class="rep-layout">
-      <aside class="rep-sidebar panel">
-        <div class="color-tabs" id="repColorTabs">
-          <button type="button" data-color="white" class="color-tab active">&#9812; White</button>
-          <button type="button" data-color="black" class="color-tab">&#9818; Black</button>
+    <div class="page-toolbar panel">
+      <div class="color-tabs" id="repColorTabs">
+        <button type="button" data-color="white" class="color-tab active">&#9812; White</button>
+        <button type="button" data-color="black" class="color-tab">&#9818; Black</button>
+      </div>
+      <select id="repOpeningSelect"></select>
+      <div class="page-toolbar-actions">
+        <button id="btnNewOpening" class="btn btn-primary small">+ New opening</button>
+        <button id="btnExportAllPgn" class="btn btn-ghost small">Export all as PGN</button>
+      </div>
+    </div>
+
+    <div id="repEmptyState" class="empty-state panel">
+      <p>Choose a color and pick an opening above, or create a new one to start recording moves.</p>
+    </div>
+
+    <div id="repWorkspace" hidden>
+      <div class="panel rep-header-panel">
+        <div class="rep-header-row">
+          <h2 class="panel-title" id="repOpeningName"></h2>
+          <div class="rep-header-actions">
+            <button id="btnRenameOpening" class="btn btn-ghost small">Rename</button>
+            <button id="btnDeleteOpening" class="btn btn-ghost small danger">Delete opening</button>
+          </div>
         </div>
-        <ul class="opening-list" id="repOpeningList"></ul>
-        <button id="btnNewOpening" class="btn btn-primary full-width">+ New opening</button>
-        <button id="btnExportAllPgn" class="btn btn-ghost full-width small">Export all as PGN</button>
-      </aside>
+        <p class="muted" id="repTreeStats"></p>
+      </div>
 
-      <div class="rep-main">
-        <div id="repEmptyState" class="empty-state panel">
-          <p>Pick an opening on the left, or create a new one to start recording moves.</p>
+      <div class="rep-workspace-grid">
+        <div class="panel rep-board-panel">
+          <div id="repBoard" class="board-mount board-large"></div>
+          <div class="solve-controls">
+            <button id="btnFlipRepBoard" class="btn btn-ghost small">&#8635; Flip board</button>
+            <button id="btnGoRoot" class="btn btn-ghost small">&#8962; Starting position</button>
+            <button id="btnDeleteMove" class="btn btn-ghost small danger">Delete this move</button>
+          </div>
+          <p class="selected-move-label" id="selectedMoveLabel"></p>
+
+          <div class="field-row" id="commentBeforeRow">
+            <label for="commentBeforeInput">Comment before this move</label>
+            <textarea id="commentBeforeInput" rows="2" placeholder="e.g. Preparing …"></textarea>
+          </div>
+          <div class="field-row">
+            <label id="commentAfterLabel" for="commentAfterInput">Comment after this move</label>
+            <textarea id="commentAfterInput" rows="2" placeholder="e.g. Better is … here."></textarea>
+          </div>
+
+          <div class="field-row" id="markPanel">
+            <label>Mark this move</label>
+            <div class="mark-row">
+              <span class="mark-row-label">Color</span>
+              <div class="swatch-row" id="markColors"></div>
+            </div>
+            <div class="mark-row">
+              <span class="mark-row-label">Icon</span>
+              <div class="glyph-row" id="markGlyphs"></div>
+            </div>
+          </div>
         </div>
 
-        <div id="repWorkspace" hidden>
-          <div class="panel rep-header-panel">
-            <div class="rep-header-row">
-              <h2 class="panel-title" id="repOpeningName"></h2>
-              <div class="rep-header-actions">
-                <button id="btnRenameOpening" class="btn btn-ghost small">Rename</button>
-                <button id="btnDeleteOpening" class="btn btn-ghost small danger">Delete opening</button>
-              </div>
-            </div>
-            <p class="muted" id="repTreeStats"></p>
-          </div>
+        <div class="panel rep-tree-panel">
+          <h3 class="panel-title small-title">Notation</h3>
+          <p class="muted small-note">Right-click a move to add a heading, bold it, or box it.</p>
+          <div class="tree-scroll" id="repTree"></div>
+        </div>
+      </div>
 
-          <div class="rep-workspace-grid">
-            <div class="panel rep-board-panel">
-              <div id="repBoard" class="board-mount board-large"></div>
-              <div class="solve-controls">
-                <button id="btnFlipRepBoard" class="btn btn-ghost small">&#8635; Flip board</button>
-                <button id="btnGoRoot" class="btn btn-ghost small">&#8962; Starting position</button>
-                <button id="btnDeleteMove" class="btn btn-ghost small danger">Delete this move</button>
-              </div>
-              <p class="selected-move-label" id="selectedMoveLabel"></p>
+      <div class="panel">
+        <h3 class="panel-title small-title">Import PGN into this opening</h3>
+        <p class="muted" style="margin-bottom: 12px;">Moves merge into the tree at the currently selected position — shared prefixes are combined, new continuations become variations.</p>
+        <div class="field-row">
+          <label for="repPgnFile">PGN file</label>
+          <input id="repPgnFile" type="file" accept=".pgn,text/plain" />
+        </div>
+        <div class="field-row">
+          <label for="repPgnText">Or paste PGN text</label>
+          <textarea id="repPgnText" rows="5" placeholder="1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 ..."></textarea>
+        </div>
+        <div class="field-row actions-row">
+          <button id="btnImportRepPgn" class="btn btn-primary">Import</button>
+        </div>
+        <p class="muted" id="repPgnStatus"></p>
+      </div>
 
-              <div class="field-row" id="commentBeforeRow">
-                <label for="commentBeforeInput">Comment before this move</label>
-                <textarea id="commentBeforeInput" rows="2" placeholder="e.g. Preparing …"></textarea>
-              </div>
-              <div class="field-row">
-                <label id="commentAfterLabel" for="commentAfterInput">Comment after this move</label>
-                <textarea id="commentAfterInput" rows="2" placeholder="e.g. Better is … here."></textarea>
-              </div>
-
-              <div class="field-row" id="markPanel">
-                <label>Mark this move</label>
-                <div class="mark-row">
-                  <span class="mark-row-label">Color</span>
-                  <div class="swatch-row" id="markColors"></div>
-                </div>
-                <div class="mark-row">
-                  <span class="mark-row-label">Icon</span>
-                  <div class="glyph-row" id="markGlyphs"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel rep-tree-panel">
-              <h3 class="panel-title small-title">Notation</h3>
-              <div class="tree-scroll" id="repTree"></div>
-            </div>
-          </div>
-
-          <div class="panel">
-            <h3 class="panel-title small-title">Import PGN into this opening</h3>
-            <p class="muted" style="margin-bottom: 12px;">Moves merge into the tree at the currently selected position — shared prefixes are combined, new continuations become variations.</p>
-            <div class="field-row">
-              <label for="repPgnFile">PGN file</label>
-              <input id="repPgnFile" type="file" accept=".pgn,text/plain" />
-            </div>
-            <div class="field-row">
-              <label for="repPgnText">Or paste PGN text</label>
-              <textarea id="repPgnText" rows="5" placeholder="1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 ..."></textarea>
-            </div>
-            <div class="field-row actions-row">
-              <button id="btnImportRepPgn" class="btn btn-primary">Import</button>
-            </div>
-            <p class="muted" id="repPgnStatus"></p>
-          </div>
-
-          <div class="panel">
-            <h3 class="panel-title small-title">Export</h3>
-            <div class="field-row actions-row" style="margin-top: 0;">
-              <button id="btnCopyPgn" class="btn btn-ghost">Copy PGN to clipboard</button>
-              <button id="btnDownloadPgn" class="btn btn-ghost">Download .pgn</button>
-            </div>
-          </div>
+      <div class="panel">
+        <h3 class="panel-title small-title">Export</h3>
+        <div class="field-row actions-row" style="margin-top: 0;">
+          <button id="btnCopyPgn" class="btn btn-ghost">Copy PGN to clipboard</button>
+          <button id="btnDownloadPgn" class="btn btn-ghost">Download .pgn</button>
         </div>
       </div>
     </div>
@@ -138,12 +137,12 @@
 
   <!-- STUDY & ANALYSIS VIEW -->
   <section id="view-study" class="view">
-    <div class="panel intro-panel study-intro-panel">
+    <div class="panel intro-panel compact-intro-panel">
       <h1 class="page-title small">Study &amp; analysis.</h1>
       <p class="page-sub">Pick a position to analyze.</p>
     </div>
 
-    <div class="study-toolbar panel">
+    <div class="page-toolbar panel">
       <div class="color-tabs" id="studyColorTabs">
         <button type="button" data-color="white" class="color-tab active">&#9812; White</button>
         <button type="button" data-color="black" class="color-tab">&#9818; Black</button>

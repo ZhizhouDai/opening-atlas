@@ -5,8 +5,13 @@
 //
 // Node shape:
 //   { id, ply, san, uci, fenBefore, fenAfter,
-//     commentBefore, commentAfter, markColor, markGlyph, children: [Node] }
+//     commentBefore, commentAfter, markColor, markGlyph,
+//     heading, headingLevel, bold, boxed, children: [Node] }
 // The root node represents the starting position and has ply 0, san null.
+// heading/headingLevel/bold/boxed are presentation styling editable from
+// either page's notation panel (right-click a move) — they live on the
+// node itself, alongside comments and marks, so both pages always show the
+// same thing without needing to sync anything separately.
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -21,6 +26,7 @@ function makeRootNode() {
     fenBefore: null, fenAfter: START_FEN,
     commentBefore: '', commentAfter: '',
     markColor: null, markGlyph: null,
+    heading: '', headingLevel: 1, bold: false, boxed: false,
     children: [],
   };
 }
@@ -32,8 +38,23 @@ function makeMoveNode(parent, applied, fenBefore, fenAfter) {
     fenBefore, fenAfter,
     commentBefore: '', commentAfter: '',
     markColor: null, markGlyph: null,
+    heading: '', headingLevel: 1, bold: false, boxed: false,
     children: [],
   };
+}
+
+// Applies a {heading, level, bold, boxed} result from modalPlyStyleEditor to
+// a node, or resets all four fields to their defaults when `style` is null
+// (the editor's "Clear" action).
+function applyPlyStyle(node, style) {
+  if (!style) {
+    node.heading = ''; node.headingLevel = 1; node.bold = false; node.boxed = false;
+    return;
+  }
+  node.heading = style.heading || '';
+  node.headingLevel = style.level === 2 ? 2 : 1;
+  node.bold = !!style.bold;
+  node.boxed = !!style.boxed;
 }
 
 function findNode(root, id) {

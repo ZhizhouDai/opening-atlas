@@ -11,7 +11,7 @@ const Repertoire = {
   async init() {
     this.els = {
       colorTabs: document.getElementById('repColorTabs'),
-      list: document.getElementById('repOpeningList'),
+      select: document.getElementById('repOpeningSelect'),
       btnNew: document.getElementById('btnNewOpening'),
       empty: document.getElementById('repEmptyState'),
       workspace: document.getElementById('repWorkspace'),
@@ -51,6 +51,7 @@ const Repertoire = {
       if (!btn) return;
       this.setColor(btn.dataset.color);
     });
+    this.els.select.addEventListener('change', () => this.selectOpening(this.els.select.value));
     this.els.btnNew.addEventListener('click', () => this.createOpening());
     this.els.btnRename.addEventListener('click', () => this.renameOpening());
     this.els.btnDeleteOpening.addEventListener('click', () => this.deleteOpening());
@@ -87,10 +88,8 @@ const Repertoire = {
 
   setColor(color) {
     this.color = color;
-    this.opening = null;
     [...this.els.colorTabs.children].forEach((b) => b.classList.toggle('active', b.dataset.color === color));
-    this.renderOpeningList();
-    this.showEmptyState();
+    this.populateSelect();
   },
 
   async loadOpenings() {
@@ -98,26 +97,22 @@ const Repertoire = {
     this.setColor('white');
   },
 
-  renderOpeningList() {
-    const list = this.openings.filter((o) => o.color === this.color)
-      .sort((a, b) => a.name.localeCompare(b.name));
-    this.els.list.innerHTML = '';
-    if (!list.length) {
-      const li = document.createElement('li');
-      li.className = 'muted opening-list-empty';
-      li.textContent = 'No openings yet.';
-      this.els.list.appendChild(li);
-      return;
-    }
-    list.forEach((o) => {
-      const li = document.createElement('li');
-      li.className = 'opening-item' + (this.opening && this.opening.id === o.id ? ' active' : '');
-      li.dataset.id = o.id;
+  populateSelect(opts = {}) {
+    const list = this.openings.filter((o) => o.color === this.color).sort((a, b) => a.name.localeCompare(b.name));
+    this.els.select.innerHTML = '<option value="">Choose an opening…</option>' + list.map((o) => {
       const n = countNodes(o.tree) - 1;
-      li.innerHTML = `<span class="opening-item-name">${escapeHtml(o.name)}</span><span class="opening-item-count muted">${n} move${n === 1 ? '' : 's'}</span>`;
-      li.addEventListener('click', () => this.selectOpening(o.id));
-      this.els.list.appendChild(li);
-    });
+      return `<option value="${o.id}">${escapeHtml(o.name)} (${n} move${n === 1 ? '' : 's'})</option>`;
+    }).join('');
+    const keep = opts.preserveId && list.find((o) => o.id === opts.preserveId);
+    if (keep) {
+      this.els.select.value = keep.id;
+      this.opening = keep;
+      this.showEmptyState();
+      this.els.openingName.textContent = this.opening.name;
+    } else {
+      this.opening = null;
+      this.showEmptyState();
+    }
   },
 
   showEmptyState() {
@@ -135,7 +130,6 @@ const Repertoire = {
     };
     await DB.openings.put(opening);
     this.openings.push(opening);
-    this.renderOpeningList();
     this.selectOpening(opening.id);
     toast(`Created "${opening.name}"`);
   },
@@ -146,7 +140,7 @@ const Repertoire = {
     if (!name || !name.trim()) return;
     this.opening.name = name.trim();
     await this.persist();
-    this.renderOpeningList();
+    this.populateSelect({ preserveId: this.opening.id });
     this.els.openingName.textContent = this.opening.name;
   },
 
@@ -159,18 +153,16 @@ const Repertoire = {
     await DB.studyState.delete(id).catch(() => {});
     this.openings = this.openings.filter((o) => o.id !== id);
     this.opening = null;
-    this.renderOpeningList();
-    this.showEmptyState();
+    this.populateSelect();
     toast('Opening deleted');
   },
 
   selectOpening(id) {
     this.opening = this.openings.find((o) => o.id === id);
-    if (!this.opening) return;
+    if (!this.opening) { this.populateSelect(); return; }
     this.cursorId = 'root';
     this.board.orientation = this.opening.color === 'black' ? 'b' : 'w';
-    this.renderOpeningList();
-    this.showEmptyState();
+    this.populateSelect({ preserveId: this.opening.id });
     this.els.openingName.textContent = this.opening.name;
     this.renderAll();
   },
@@ -186,8 +178,23 @@ const Repertoire = {
   renderTreePane() {
     this.nodeEls = renderTree(this.els.tree, this.opening.tree, {
       onSelect: (id) => this.selectNode(id),
+      onPlyContext: (id) => this.openPlyStyleEditor(id),
     }).nodeEls;
     this.highlightCursor();
+  },
+
+  // Heading/bold/boxed live on the node itself (see chesstree.js), so
+  // editing them here shows up immediately on the Study & Analysis page too.
+  async openPlyStyleEditor(nodeId) {
+    const node = findNode(this.opening.tree, nodeId);
+    const existing = (node.heading || node.bold || node.boxed)
+      ? { heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed }
+      : null;
+    const result = await modalPlyStyleEditor(existing);
+    if (result === undefined) return;
+    applyPlyStyle(node, result);
+    await this.persist();
+    this.renderTreePane();
   },
 
   highlightCursor() {

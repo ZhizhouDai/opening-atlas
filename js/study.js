@@ -13,7 +13,6 @@ const Study = {
   activeBoardIdx: 0,
   boardPaths: [], // one entry per board, each an array of child indices from root
   annotations: {}, // nodeId -> {arrows:[], circles:[], text:''}
-  plyStyles: {}, // nodeId -> {heading, level, bold, boxed}
   collapsedComments: null, // Set<key>, session-only reading aid
   boards: [], // Board instances, parallel to boardPaths
   nodeEls: new Map(),
@@ -208,7 +207,6 @@ const Study = {
       ? saved.boards.map((b) => b.path || [])
       : Array.from({ length: DEFAULT_NUM_BOARDS }, () => []);
     this.annotations = (saved && saved.annotations) ? saved.annotations : {};
-    this.plyStyles = (saved && saved.plyStyles) ? saved.plyStyles : {};
     this.collapsedComments = new Set();
     this.activeBoardIdx = 0;
     this.dirty = false;
@@ -221,7 +219,6 @@ const Study = {
   renderTreePane() {
     const result = renderTree(this.els.tree, this.opening.tree, {
       onSelect: (id) => this.jumpActiveBoardTo(id),
-      plyStyles: this.plyStyles,
       onPlyContext: (id) => this.openPlyStyleEditor(id),
       collapsedComments: this.collapsedComments,
       onToggleComment: (key) => this.toggleComment(key),
@@ -232,13 +229,20 @@ const Study = {
     this.updateCollapseButtonLabel();
   },
 
+  // Heading/bold/boxed live on the node itself (see chesstree.js), so this
+  // saves straight to the opening record — not gated behind the study
+  // page's own Save button — and is immediately visible on the Create
+  // Repertoire page too.
   async openPlyStyleEditor(nodeId) {
-    const existing = this.plyStyles[nodeId];
+    const node = findNode(this.opening.tree, nodeId);
+    const existing = (node.heading || node.bold || node.boxed)
+      ? { heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed }
+      : null;
     const result = await modalPlyStyleEditor(existing);
     if (result === undefined) return;
-    if (result === null) delete this.plyStyles[nodeId];
-    else this.plyStyles[nodeId] = result;
-    this.markDirty();
+    applyPlyStyle(node, result);
+    this.opening.updatedAt = Date.now();
+    await DB.openings.put(this.opening);
     this.renderTreePane();
   },
 
@@ -392,7 +396,6 @@ const Study = {
       openingId: this.opening.id,
       boards: this.boardPaths.map((path) => ({ path })),
       annotations: this.annotations,
-      plyStyles: this.plyStyles,
       updatedAt: Date.now(),
     };
     await DB.studyState.put(record);

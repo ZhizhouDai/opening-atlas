@@ -25,6 +25,11 @@ on your PC gives you two separate, independent libraries.
 - Add a comment **before** and **after** any move.
 - Mark any move with a color (green/red/blue/yellow/orange/purple) and an
   icon (!, !!, !?, ?!, ?, ??) — both shown right in the move list.
+- Right-click any move to label it with a heading or subheading (e.g.
+  "Rossolimo Variation") in a gold accent color, and/or bold or box it for
+  emphasis — the same right-click editor as on the Study & Analysis page,
+  since heading/bold/box live on the move itself and show up on both pages
+  immediately, with no separate save step.
 - Export PGN: copy the current opening to the clipboard, download it as a
   `.pgn` file, or download every opening for the selected color as one
   multi-game PGN file.
@@ -35,10 +40,7 @@ on your PC gives you two separate, independent libraries.
   privileged "mainline" — the instant a position branches, every
   continuation gets its own equally-indented line, so it's obvious exactly
   where and how a line diverges.
-- Right-click any move to label it with a heading or subheading (e.g.
-  "Rossolimo Variation") in a gold accent color that stands out from the
-  moves themselves, and independently bold it and/or box it for emphasis.
-  Comments can be collapsed individually (click one) or all at once, to
+- Comments can be collapsed individually (click one) or all at once, to
   keep a long tree scannable.
 - A variable number of independent boards (1–9, add/remove freely), two per
   row. Click a board to make it active, then click any move in the
