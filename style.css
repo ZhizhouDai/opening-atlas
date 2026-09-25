@@ -268,6 +268,11 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .color-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
 .color-tab {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
   padding: 9px 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
@@ -276,9 +281,9 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
+  line-height: 1;
 }
 .color-tab.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-.color-tab-icon { width: 15px; height: 15px; vertical-align: -3px; margin-right: 5px; }
 
 /* Themed scrollbar for the notation panel, so it matches the dark-green
    flat design instead of the OS/browser default. Firefox picks up
