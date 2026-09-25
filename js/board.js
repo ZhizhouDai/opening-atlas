@@ -15,6 +15,15 @@ const ANNOTATION_COLORS = {
   yellow: '#e0c95a', orange: '#e08a3d', purple: '#a06ae0',
 };
 
+// A darker variant of the same palette, for when a color name needs to be
+// shown as page text (e.g. the draw-color picker's label) rather than drawn
+// on the board — the board colors above are too light to read as text on
+// the app's light background.
+const ANNOTATION_TEXT_COLORS = {
+  green: '#1f8a4c', red: '#c0392b', blue: '#2f6fb0',
+  yellow: '#a1791a', orange: '#b5651d', purple: '#7a4bb0',
+};
+
 class Board {
   constructor(container, opts = {}) {
     this.container = container;

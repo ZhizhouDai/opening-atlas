@@ -107,7 +107,7 @@ const Study = {
       panel.querySelector('[data-act="lock"]').addEventListener('click', () => this.toggleLock(i));
       panel.querySelector('[data-act="close"]').addEventListener('click', () => this.removeBoard(i));
       const colorSelect = panel.querySelector('[data-anno-select]');
-      const syncColorSelect = () => { colorSelect.style.color = ANNOTATION_COLORS[colorSelect.value] || ''; };
+      const syncColorSelect = () => { colorSelect.style.color = ANNOTATION_TEXT_COLORS[colorSelect.value] || ''; };
       colorSelect.addEventListener('change', () => {
         this.setActiveBoard(i);
         board.setDrawColor(colorSelect.value);

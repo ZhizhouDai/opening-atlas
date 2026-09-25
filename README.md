@@ -73,9 +73,9 @@ on your PC gives you two separate, independent libraries.
 
 ## Design
 
-Flat, dark-green themed UI (Fraunces for headings, Inter for everything
-else) built with no framework and no build step — plain HTML/CSS/JS,
-chess.js for rules, and the Kosal piece set.
+Flat UI with a light background and a green accent (Fraunces for headings,
+Inter for everything else) built with no framework and no build step —
+plain HTML/CSS/JS, chess.js for rules, and the Kosal piece set.
 
 ## Running a local copy
 
