@@ -118,7 +118,7 @@ class Board {
     order.forEach((sq, idx) => {
       const file = FILES.indexOf(sq[0]);
       const rank = parseInt(sq[1], 10);
-      const isLight = (file + rank) % 2 === 1;
+      const isLight = (file + rank) % 2 === 0;
       const div = document.createElement('div');
       div.className = 'square ' + (isLight ? 'light' : 'dark');
       div.dataset.square = sq;
