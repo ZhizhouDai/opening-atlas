@@ -1,6 +1,9 @@
-// Renders a repertoire move tree as a clickable, indented outline: the
-// mainline runs inline, and every branch point opens a new indented line so
-// it's immediately visible where a line starts to diverge.
+// Renders a repertoire move tree as a clickable, indented outline. There is
+// no privileged "mainline": a single unbranched run of moves stays on one
+// line (nothing to distinguish it from), but the moment a node has more
+// than one child, every child — including what would elsewhere be called
+// "the main move" — becomes its own equally-indented continuation. None of
+// them stays inline while the others get demoted into parentheses.
 
 const MARK_GLYPHS = ['', '!', '!!', '!?', '?!', '?', '??'];
 const MARK_COLORS = ['none', 'green', 'red', 'blue', 'yellow', 'orange', 'purple'];
@@ -31,7 +34,7 @@ function renderTree(container, rootNode, opts = {}) {
   const rootLine = document.createElement('div');
   rootLine.className = 'move-line';
   container.appendChild(rootLine);
-  walk(rootLine, rootNode, true);
+  walk(rootLine, rootNode);
   return nodeEls;
 
   function appendMoveToken(lineEl, node, forceLabel) {
@@ -76,25 +79,26 @@ function renderTree(container, rootNode, opts = {}) {
     }
   }
 
-  function walk(lineEl, startNode, forceLabelForFirst) {
+  function walk(lineEl, startNode) {
     let cur = startNode;
-    let first = true;
-    while (cur.children && cur.children.length) {
-      const main = cur.children[0];
-      appendMoveToken(lineEl, main, first && forceLabelForFirst);
-      first = false;
-      for (let i = 1; i < cur.children.length; i++) {
-        const alt = cur.children[i];
-        const varWrap = document.createElement('div');
-        varWrap.className = 'variation';
-        const varLine = document.createElement('div');
-        varLine.className = 'move-line';
-        appendMoveToken(varLine, alt, true);
-        varWrap.appendChild(varLine);
-        walk(varLine, alt, false);
-        lineEl.appendChild(varWrap);
-      }
-      cur = main;
+    // A single child is simply the next move in an unbranched line — no
+    // choice is being made, so it continues on the same line.
+    while (cur.children && cur.children.length === 1) {
+      appendMoveToken(lineEl, cur.children[0], false);
+      cur = cur.children[0];
     }
+    if (!cur.children || cur.children.length < 2) return;
+    // Two or more children: every one of them is an equal continuation from
+    // here, each gets its own indented line.
+    cur.children.forEach((child) => {
+      const contWrap = document.createElement('div');
+      contWrap.className = 'continuation';
+      const contLine = document.createElement('div');
+      contLine.className = 'move-line';
+      appendMoveToken(contLine, child, true);
+      contWrap.appendChild(contLine);
+      walk(contLine, child);
+      lineEl.appendChild(contWrap);
+    });
   }
 }

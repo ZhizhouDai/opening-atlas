@@ -283,7 +283,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 
 .tree-scroll { max-height: 62vh; overflow-y: auto; padding-right: 4px; }
 .move-line { line-height: 2; }
-.variation {
+.continuation {
   margin: 2px 0 2px 18px;
   padding-left: 10px;
   border-left: 2px solid var(--line);
