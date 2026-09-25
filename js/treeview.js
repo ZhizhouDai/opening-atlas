@@ -152,12 +152,14 @@ function renderTree(container, rootNode, opts = {}) {
   }
 }
 
-// A condensed "table of contents" view: one entry per key branching point
-// (any node with a heading/subheading), showing only the moves leading up
-// to it plus, after a "⋯", the position that named line eventually reaches
-// — the moves in between are deliberately omitted so a whole repertoire's
-// named lines can be scanned at a glance. Returns { nodeEls, commentKeys }
-// with the same shape as renderTree (commentKeys is always empty here).
+// A condensed, pruned-tree view of only the "key branching points" (nodes
+// with a heading/subheading): shared moves leading up to a heading are
+// shown exactly once and only actually split into indented branches where
+// headed lines genuinely diverge — the same branching convention renderTree
+// uses — and each heading's own run of moves collapses to a "⋯" followed by
+// the position that line eventually reaches, so the moves in between don't
+// have to be scanned past. Returns { nodeEls, commentKeys } with the same
+// shape as renderTree (commentKeys is always empty here).
 function renderBranchOutline(container, rootNode, opts = {}) {
   const onSelect = opts.onSelect;
   const onPlyContext = opts.onPlyContext;
@@ -173,47 +175,57 @@ function renderBranchOutline(container, rootNode, opts = {}) {
     return { nodeEls, commentKeys: [] };
   }
 
-  headingNodes.forEach((headingNode) => {
-    const entry = document.createElement('div');
-    entry.className = 'branch-outline-entry';
-
-    const headingEl = document.createElement('div');
-    headingEl.className = 'tree-heading level-' + (headingNode.headingLevel === 2 ? 2 : 1);
-    headingEl.textContent = headingNode.heading;
-    entry.appendChild(headingEl);
-
-    const line = document.createElement('div');
-    line.className = 'move-line';
-
-    const idxPath = pathToNode(rootNode, headingNode.id) || [];
+  // Every node that must survive pruning: each heading's full ancestor
+  // chain (so shared prefixes and real branch points stay intact) plus the
+  // position each heading's own line eventually reaches.
+  const keepIds = new Set([rootNode.id]);
+  headingNodes.forEach((h) => {
+    const idxPath = pathToNode(rootNode, h.id) || [];
     let cur = rootNode;
-    idxPath.forEach((idx, i) => {
-      cur = cur.children[idx];
-      appendToken(line, cur, i === 0);
-    });
+    idxPath.forEach((idx) => { cur = cur.children[idx]; keepIds.add(cur.id); });
+    keepIds.add(mainlineLeaf(h).id);
+  });
 
-    const endNode = mainlineLeaf(headingNode);
-    if (endNode !== headingNode) {
+  // The nearest kept descendants reachable from `origNode` along each
+  // branch, skipping over (and flagging with gapBefore) anything pruned.
+  function keptChildren(origNode) {
+    const results = [];
+    (function search(node, gapped) {
+      node.children.forEach((child) => {
+        if (keepIds.has(child.id)) results.push({ node: child, gapBefore: gapped });
+        else search(child, true);
+      });
+    }(origNode, false));
+    return results;
+  }
+
+  const rootLine = document.createElement('div');
+  rootLine.className = 'move-line';
+  container.appendChild(rootLine);
+  walk(rootLine, rootNode);
+  return { nodeEls, commentKeys: [] };
+
+  function appendHeading(parentEl, node) {
+    if (!node.heading) return;
+    const h = document.createElement('div');
+    h.className = 'tree-heading level-' + (node.headingLevel === 2 ? 2 : 1);
+    h.textContent = node.heading;
+    parentEl.appendChild(h);
+  }
+
+  function appendToken(lineEl, node, forceLabel, gapBefore) {
+    if (gapBefore) {
       const ellipsis = document.createElement('span');
       ellipsis.className = 'branch-outline-ellipsis';
       ellipsis.textContent = '⋯';
-      line.appendChild(ellipsis);
-      appendToken(line, endNode, true);
+      lineEl.appendChild(ellipsis);
     }
-
-    entry.appendChild(line);
-    container.appendChild(entry);
-  });
-
-  return { nodeEls, commentKeys: [] };
-
-  function appendToken(lineEl, node, forceLabel) {
     if (node.ply % 2 === 1) {
       const num = document.createElement('span');
       num.className = 'move-num';
       num.textContent = `${(node.ply + 1) / 2}.`;
       lineEl.appendChild(num);
-    } else if (forceLabel) {
+    } else if (forceLabel || gapBefore) {
       const num = document.createElement('span');
       num.className = 'move-num';
       num.textContent = `${node.ply / 2}...`;
@@ -240,5 +252,37 @@ function renderBranchOutline(container, rootNode, opts = {}) {
     }
     lineEl.appendChild(span);
     nodeEls.set(node.id, span);
+  }
+
+  // Appends `entry` (a {node, gapBefore} kept-child) as the start of its own
+  // indented line, then keeps walking its own kept descendants.
+  function startNewLine(parentLineEl, entry) {
+    const wrap = document.createElement('div');
+    wrap.className = 'continuation';
+    appendHeading(wrap, entry.node);
+    const line = document.createElement('div');
+    line.className = 'move-line';
+    appendToken(line, entry.node, true, entry.gapBefore);
+    wrap.appendChild(line);
+    walk(line, entry.node);
+    parentLineEl.appendChild(wrap);
+  }
+
+  function walk(lineEl, startNode) {
+    let cur = startNode;
+    let kids = keptChildren(cur);
+    // A single kept child with no heading of its own is just the next
+    // reference point on an unbranched line — stays inline.
+    while (kids.length === 1 && !kids[0].node.heading) {
+      appendToken(lineEl, kids[0].node, false, kids[0].gapBefore);
+      cur = kids[0].node;
+      kids = keptChildren(cur);
+    }
+    if (!kids.length) return;
+    if (kids.length === 1) {
+      startNewLine(lineEl, kids[0]);
+      return;
+    }
+    kids.forEach((entry) => startNewLine(lineEl, entry));
   }
 }

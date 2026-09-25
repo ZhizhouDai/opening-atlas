@@ -363,13 +363,6 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .tree-heading.level-1 { font-size: 15px; font-weight: 600; }
 .tree-heading.level-2 { font-size: 13px; font-weight: 500; font-style: italic; color: var(--heading-soft); margin-top: 6px; }
 
-.branch-outline-entry {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line-soft);
-}
-.branch-outline-entry:first-child { padding-top: 0; }
-.branch-outline-entry:last-child { border-bottom: none; }
-.branch-outline-entry .tree-heading { margin: 0 0 4px; }
 .branch-outline-ellipsis { color: var(--ink-faint); margin: 0 6px; font-weight: 600; }
 .ply.headable:hover { box-shadow: inset 0 -2px 0 var(--heading); }
 

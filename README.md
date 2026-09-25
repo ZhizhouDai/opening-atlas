@@ -44,10 +44,13 @@ on your PC gives you two separate, independent libraries.
   where and how a line diverges.
 - Comments can be collapsed individually (click one) or all at once, to
   keep a long tree scannable.
-- "Show key branching points" condenses the tree to a table of contents of
-  every headed line: the moves leading up to each heading, then (after a
-  "⋯") the position that line eventually reaches — the moves in between are
-  skipped so a whole repertoire's named lines can be scanned at a glance.
+- "Show key branching points" condenses the tree to just its headed lines,
+  pruned the same way the full tree branches — shared moves leading up to a
+  heading are shown once, headed lines only actually split where they
+  genuinely diverge, and each one collapses to a "⋯" followed by the
+  position it eventually reaches, skipping the moves in between. A heading
+  nested inside another headed line shows up as its own indented branch
+  within it, exactly like the full notation.
 - Each board can be renamed — type a name, or pick one of the repertoire's
   existing headings — so "Board 3" can become "Anti-Sicilian Plan" instead.
 - A board can be locked so clicking the notation no longer moves it (its
