@@ -44,10 +44,14 @@ on your PC gives you two separate, independent libraries.
   where and how a line diverges.
 - Comments can be collapsed individually (click one) or all at once, to
   keep a long tree scannable.
-- A variable number of independent boards (1–9, add/remove freely), two per
-  row. Click a board to make it active, then click any move in the
-  notation to jump that board there — the move gets a colored dot for every
-  board currently sitting on it.
+- A variable number of independent boards (1–9, add/remove freely). The
+  page itself is fluid: on a wide enough screen it uses a much roomier
+  container, the notation panel scales with viewport width, and the board
+  grid wraps to as many per row as comfortably fit — so a bigger monitor
+  genuinely shows more at once, not just a centered island of empty margin.
+  Click a board to make it active, then click any move in the notation to
+  jump that board there — the move gets a colored dot for every board
+  currently sitting on it.
 - Each board has its own **◀ / ▶** controls to step through the line; at a
   branch point, **▶** asks which continuation to follow.
 - Right-click-drag to draw an arrow, right-click a square to circle it —

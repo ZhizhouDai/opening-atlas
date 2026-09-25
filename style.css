@@ -83,6 +83,14 @@ h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; margin: 
 
 main { max-width: 1320px; margin: 0 auto; padding: 32px 40px 80px; }
 
+/* The Study page has a lot to gain from extra width (wider notation,
+   more boards per row), so let it use a much wider container on screens
+   that have room for it — the mobile/tablet breakpoint below still takes
+   over at narrow widths regardless. */
+@media (min-width: 981px) {
+  main:has(#view-study.active) { max-width: 1900px; }
+}
+
 .view { display: none; animation: fadein 0.2s ease; }
 .view.active { display: block; }
 @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -356,7 +364,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .save-status { font-size: 12px; color: var(--ink-soft); }
 .save-status.dirty { color: #e8d476; font-weight: 600; }
 
-.study-layout { display: grid; grid-template-columns: 540px 1fr; gap: 20px; align-items: start; }
+.study-layout { display: grid; grid-template-columns: minmax(420px, 30vw) 1fr; gap: 20px; align-items: start; }
 .study-tree-panel { position: sticky; top: 92px; }
 .tree-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
 .tree-panel-header .panel-title { margin-bottom: 0; }
@@ -368,7 +376,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 
 .study-board-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
 }
 .study-board-panel {
@@ -377,6 +385,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   border-radius: var(--radius);
   padding: 14px;
   position: relative;
+  max-width: 420px;
 }
 .study-board-panel.active-board { border-color: var(--board-accent, var(--accent)); box-shadow: 0 0 0 1px var(--board-accent, var(--accent)); }
 .study-board-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
