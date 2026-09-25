@@ -70,4 +70,5 @@ The live site is a GitHub Pages deployment of this repo
 ## Credits
 
 Chess rules/move generation: [chess.js](https://github.com/jhlywa/chess.js)
-(BSD-2-Clause). Piece set: cburnett (CC BY-SA 3.0 / GFDL).
+(BSD-2-Clause). Piece set: [Kosal](https://github.com/philatype/kosal) by
+philatype (CC BY 4.0).
