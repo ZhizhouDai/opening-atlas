@@ -25,6 +25,9 @@ on your PC gives you two separate, independent libraries.
 - Add a comment **before** and **after** any move.
 - Mark any move with a color (green/red/blue/yellow/orange/purple) and an
   icon (!, !!, !?, ?!, ?, ??) — both shown right in the move list.
+- Export PGN: copy the current opening to the clipboard, download it as a
+  `.pgn` file, or download every opening for the selected color as one
+  multi-game PGN file.
 
 ### Study & Analysis
 

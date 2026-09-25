@@ -36,6 +36,8 @@ const Repertoire = {
       btnImportPgn: document.getElementById('btnImportRepPgn'),
       pgnStatus: document.getElementById('repPgnStatus'),
       btnCopyPgn: document.getElementById('btnCopyPgn'),
+      btnDownloadPgn: document.getElementById('btnDownloadPgn'),
+      btnExportAllPgn: document.getElementById('btnExportAllPgn'),
       treeStats: document.getElementById('repTreeStats'),
     };
 
@@ -67,6 +69,8 @@ const Repertoire = {
     });
     this.els.btnImportPgn.addEventListener('click', () => this.importPgn());
     this.els.btnCopyPgn.addEventListener('click', () => this.copyPgn());
+    this.els.btnDownloadPgn.addEventListener('click', () => this.downloadPgn());
+    this.els.btnExportAllPgn.addEventListener('click', () => this.exportAllPgn());
 
     this.buildMarkPickers();
     await this.loadOpenings();
@@ -300,6 +304,21 @@ const Repertoire = {
     if (!this.opening) return;
     const pgn = exportOpeningAsPgn(this.opening);
     navigator.clipboard.writeText(pgn).then(() => toast('PGN copied to clipboard')).catch(() => toast('Could not copy — see console'));
+  },
+
+  downloadPgn() {
+    if (!this.opening) return;
+    const pgn = exportOpeningAsPgn(this.opening);
+    downloadTextFile(`${slugifyFilename(this.opening.name)}.pgn`, pgn);
+    toast('PGN downloaded');
+  },
+
+  exportAllPgn() {
+    const list = this.openings.filter((o) => o.color === this.color);
+    if (!list.length) { toast(`No ${this.color} openings to export yet`); return; }
+    const pgn = exportOpeningsAsPgn(list);
+    downloadTextFile(`opening-atlas-${this.color}.pgn`, pgn);
+    toast(`Downloaded ${list.length} opening${list.length === 1 ? '' : 's'}`);
   },
 
   async persist() {

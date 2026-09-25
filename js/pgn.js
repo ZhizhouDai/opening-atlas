@@ -147,3 +147,9 @@ function exportOpeningAsPgn(opening) {
   const moves = exportPgnFromNode(opening.tree, {});
   return `${headers}\n\n${moves} *`;
 }
+
+// Concatenates several openings into one PGN database — each is its own
+// game, separated by a blank line per the PGN spec.
+function exportOpeningsAsPgn(openings) {
+  return openings.map(exportOpeningAsPgn).join('\n\n');
+}

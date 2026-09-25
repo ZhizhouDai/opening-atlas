@@ -49,6 +49,7 @@
         </div>
         <ul class="opening-list" id="repOpeningList"></ul>
         <button id="btnNewOpening" class="btn btn-primary full-width">+ New opening</button>
+        <button id="btnExportAllPgn" class="btn btn-ghost full-width small">Export all as PGN</button>
       </aside>
 
       <div class="rep-main">
@@ -119,9 +120,16 @@
             </div>
             <div class="field-row actions-row">
               <button id="btnImportRepPgn" class="btn btn-primary">Import</button>
-              <button id="btnCopyPgn" class="btn btn-ghost">Copy PGN of this opening</button>
             </div>
             <p class="muted" id="repPgnStatus"></p>
+          </div>
+
+          <div class="panel">
+            <h3 class="panel-title small-title">Export</h3>
+            <div class="field-row actions-row" style="margin-top: 0;">
+              <button id="btnCopyPgn" class="btn btn-ghost">Copy PGN to clipboard</button>
+              <button id="btnDownloadPgn" class="btn btn-ghost">Download .pgn</button>
+            </div>
           </div>
         </div>
       </div>

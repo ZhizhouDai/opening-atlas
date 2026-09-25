@@ -9,6 +9,23 @@ function toast(msg) {
   toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
 }
 
+function downloadTextFile(filename, text) {
+  const blob = new Blob([text], { type: 'application/x-chess-pgn' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// Turns an opening/file name into a safe filename component.
+function slugifyFilename(name) {
+  return name.trim().replace(/[\\/:*?"<>|]+/g, '-') || 'untitled';
+}
+
 async function setView(view) {
   const leavingStudy = view !== 'study' && document.getElementById('view-study').classList.contains('active');
   if (leavingStudy && typeof Study !== 'undefined' && Study.dirty) {
