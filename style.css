@@ -270,6 +270,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   font-size: 13px;
 }
 .color-tab.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.color-tab-icon { width: 15px; height: 15px; vertical-align: -3px; margin-right: 5px; }
 
 /* Themed scrollbar for the notation panel, so it matches the dark-green
    flat design instead of the OS/browser default. Firefox picks up
