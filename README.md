@@ -44,6 +44,15 @@ on your PC gives you two separate, independent libraries.
   where and how a line diverges.
 - Comments can be collapsed individually (click one) or all at once, to
   keep a long tree scannable.
+- "Show key branching points" condenses the tree to a table of contents of
+  every headed line: the moves leading up to each heading, then (after a
+  "⋯") the position that line eventually reaches — the moves in between are
+  skipped so a whole repertoire's named lines can be scanned at a glance.
+- Each board can be renamed — type a name, or pick one of the repertoire's
+  existing headings — so "Board 3" can become "Anti-Sicilian Plan" instead.
+- A board can be locked so clicking the notation no longer moves it (its
+  own ◀ / ▶ controls still do) — handy for keeping a reference position
+  pinned on one board while browsing the tree with the others.
 - A variable number of independent boards (1–9, add/remove freely). The
   page itself is fluid: on a wide enough screen it uses a much roomier
   container, the notation panel scales with viewport width, and the board

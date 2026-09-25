@@ -151,3 +151,94 @@ function renderTree(container, rootNode, opts = {}) {
     cur.children.forEach((child) => startNewLine(lineEl, child));
   }
 }
+
+// A condensed "table of contents" view: one entry per key branching point
+// (any node with a heading/subheading), showing only the moves leading up
+// to it plus, after a "⋯", the position that named line eventually reaches
+// — the moves in between are deliberately omitted so a whole repertoire's
+// named lines can be scanned at a glance. Returns { nodeEls, commentKeys }
+// with the same shape as renderTree (commentKeys is always empty here).
+function renderBranchOutline(container, rootNode, opts = {}) {
+  const onSelect = opts.onSelect;
+  const onPlyContext = opts.onPlyContext;
+  const nodeEls = new Map();
+  container.innerHTML = '';
+
+  const headingNodes = collectHeadingNodes(rootNode);
+  if (!headingNodes.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted tree-empty';
+    empty.textContent = 'No headings yet. Right-click a move in the full notation to label a key branching point.';
+    container.appendChild(empty);
+    return { nodeEls, commentKeys: [] };
+  }
+
+  headingNodes.forEach((headingNode) => {
+    const entry = document.createElement('div');
+    entry.className = 'branch-outline-entry';
+
+    const headingEl = document.createElement('div');
+    headingEl.className = 'tree-heading level-' + (headingNode.headingLevel === 2 ? 2 : 1);
+    headingEl.textContent = headingNode.heading;
+    entry.appendChild(headingEl);
+
+    const line = document.createElement('div');
+    line.className = 'move-line';
+
+    const idxPath = pathToNode(rootNode, headingNode.id) || [];
+    let cur = rootNode;
+    idxPath.forEach((idx, i) => {
+      cur = cur.children[idx];
+      appendToken(line, cur, i === 0);
+    });
+
+    const endNode = mainlineLeaf(headingNode);
+    if (endNode !== headingNode) {
+      const ellipsis = document.createElement('span');
+      ellipsis.className = 'branch-outline-ellipsis';
+      ellipsis.textContent = '⋯';
+      line.appendChild(ellipsis);
+      appendToken(line, endNode, true);
+    }
+
+    entry.appendChild(line);
+    container.appendChild(entry);
+  });
+
+  return { nodeEls, commentKeys: [] };
+
+  function appendToken(lineEl, node, forceLabel) {
+    if (node.ply % 2 === 1) {
+      const num = document.createElement('span');
+      num.className = 'move-num';
+      num.textContent = `${(node.ply + 1) / 2}.`;
+      lineEl.appendChild(num);
+    } else if (forceLabel) {
+      const num = document.createElement('span');
+      num.className = 'move-num';
+      num.textContent = `${node.ply / 2}...`;
+      lineEl.appendChild(num);
+    }
+    const span = document.createElement('span');
+    span.className = 'ply';
+    span.dataset.nodeId = node.id;
+    const sanText = document.createElement('span');
+    sanText.className = 'ply-san';
+    sanText.textContent = node.san + (node.markGlyph || '');
+    span.appendChild(sanText);
+    const dots = document.createElement('span');
+    dots.className = 'ply-dots';
+    span.appendChild(dots);
+    if (node.markColor && node.markColor !== 'none') span.classList.add('mark-' + node.markColor);
+    if (node.markGlyph) span.classList.add('has-glyph');
+    if (node.bold) span.classList.add('ply-bold');
+    if (node.boxed) span.classList.add('ply-boxed');
+    if (onSelect) span.addEventListener('click', () => onSelect(node.id));
+    if (onPlyContext) {
+      span.classList.add('headable');
+      span.addEventListener('contextmenu', (e) => { e.preventDefault(); onPlyContext(node.id); });
+    }
+    lineEl.appendChild(span);
+    nodeEls.set(node.id, span);
+  }
+}

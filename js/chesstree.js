@@ -148,7 +148,7 @@ async function reorderPly(opening, nodeId, direction) {
   const saved = await DB.studyState.get(opening.id);
   if (saved && saved.boards && saved.boards.length) {
     const paths = remapPathsForSwap(opening.tree, saved.boards.map((b) => b.path || []), swap.parent, swap.fromIndex, swap.toIndex);
-    saved.boards = paths.map((path) => ({ path }));
+    saved.boards = saved.boards.map((b, i) => ({ ...b, path: paths[i] }));
     await DB.studyState.put(saved);
   }
   if (typeof Study !== 'undefined' && Study.opening && Study.opening.id === opening.id) {
@@ -173,6 +173,26 @@ function addOrReuseChild(cursor, applied, fenBefore, fenAfter) {
 function cloneTree(node) {
   if (window.structuredClone) return structuredClone(node);
   return JSON.parse(JSON.stringify(node));
+}
+
+// Every node with a heading/subheading set, in document (pre-order) order —
+// these are the repertoire's "key branching points", used by both the
+// branch-outline view and the board-naming picker.
+function collectHeadingNodes(root) {
+  const list = [];
+  (function walk(node) {
+    if (node.heading) list.push(node);
+    node.children.forEach(walk);
+  }(root));
+  return list;
+}
+
+// Follows the mainline (first child, repeatedly) from `node` down to a leaf
+// — the "ending position" a named line eventually reaches.
+function mainlineLeaf(node) {
+  let cur = node;
+  while (cur.children.length) cur = cur.children[0];
+  return cur;
 }
 
 // Total node count, for quick stats display.

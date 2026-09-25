@@ -12,8 +12,11 @@ const Study = {
   opening: null,
   activeBoardIdx: 0,
   boardPaths: [], // one entry per board, each an array of child indices from root
+  boardNames: [], // one entry per board, '' means the default "Board N" label
+  boardLocked: [], // one entry per board — locked boards ignore notation clicks
   annotations: {}, // nodeId -> {arrows:[], circles:[], text:''}
   collapsedComments: null, // Set<key>, session-only reading aid
+  showOutline: false, // condensed "key branching points" view instead of the full tree
   boards: [], // Board instances, parallel to boardPaths
   nodeEls: new Map(),
   commentKeys: [],
@@ -31,6 +34,7 @@ const Study = {
       btnSave: document.getElementById('btnSaveStudy'),
       saveStatus: document.getElementById('studySaveStatus'),
       btnToggleComments: document.getElementById('btnToggleComments'),
+      btnToggleOutline: document.getElementById('btnToggleOutline'),
       btnAddBoard: document.getElementById('btnAddBoard'),
       boardCountLabel: document.getElementById('boardCountLabel'),
     };
@@ -43,6 +47,7 @@ const Study = {
     this.els.select.addEventListener('change', () => this.selectOpening(this.els.select.value));
     this.els.btnSave.addEventListener('click', () => this.save());
     this.els.btnToggleComments.addEventListener('click', () => this.toggleAllComments());
+    this.els.btnToggleOutline.addEventListener('click', () => this.toggleOutline());
     this.els.btnAddBoard.addEventListener('click', () => this.addBoard());
 
     await this.loadOpenings();
@@ -60,11 +65,14 @@ const Study = {
       panel.style.setProperty('--board-accent', color);
       panel.innerHTML = `
         <div class="study-board-header">
-          <span class="board-dot-label"><span class="board-dot-icon"></span>Board ${i + 1}</span>
+          <button type="button" class="board-name-btn" data-act="rename" title="Rename this board">
+            <span class="board-dot-icon"></span><span data-name-text>Board ${i + 1}</span>
+          </button>
           <div class="study-board-nav">
             <button type="button" class="btn btn-ghost tiny" data-act="prev" title="Previous move">&#9664;</button>
             <button type="button" class="btn btn-ghost tiny" data-act="next" title="Next move">&#9654;</button>
             <button type="button" class="btn btn-ghost tiny" data-act="reset" title="Back to start">&#8634;</button>
+            <button type="button" class="board-lock-btn" data-act="lock" title="Lock this board's position — notation clicks won't move it">Lock</button>
             <button type="button" class="board-close-btn" data-act="close" title="Remove this board">&times;</button>
           </div>
         </div>
@@ -92,9 +100,11 @@ const Study = {
       board.orientation = orientation;
       this.boards.push(board);
 
+      panel.querySelector('[data-act="rename"]').addEventListener('click', () => this.openBoardNameEditor(i));
       panel.querySelector('[data-act="prev"]').addEventListener('click', () => { this.setActiveBoard(i); this.stepBoard(i, -1); });
       panel.querySelector('[data-act="next"]').addEventListener('click', (e) => { this.setActiveBoard(i); this.stepBoard(i, 1, e.currentTarget); });
       panel.querySelector('[data-act="reset"]').addEventListener('click', () => { this.setActiveBoard(i); this.setBoardPath(i, []); });
+      panel.querySelector('[data-act="lock"]').addEventListener('click', () => this.toggleLock(i));
       panel.querySelector('[data-act="close"]').addEventListener('click', () => this.removeBoard(i));
       const colorSelect = panel.querySelector('[data-anno-select]');
       const syncColorSelect = () => { colorSelect.style.color = ANNOTATION_COLORS[colorSelect.value] || ''; };
@@ -142,6 +152,8 @@ const Study = {
   addBoard() {
     if (this.boardPaths.length >= MAX_BOARDS) return;
     this.boardPaths.push([]);
+    this.boardNames.push('');
+    this.boardLocked.push(false);
     this.markDirty();
     this.rebuildBoards();
   },
@@ -149,9 +161,31 @@ const Study = {
   removeBoard(i) {
     if (this.boardPaths.length <= MIN_BOARDS) return;
     this.boardPaths.splice(i, 1);
+    this.boardNames.splice(i, 1);
+    this.boardLocked.splice(i, 1);
     if (this.activeBoardIdx >= this.boardPaths.length) this.activeBoardIdx = this.boardPaths.length - 1;
     this.markDirty();
     this.rebuildBoards();
+  },
+
+  async openBoardNameEditor(i) {
+    const headingTexts = this.opening ? collectHeadingNodes(this.opening.tree).map((n) => n.heading) : [];
+    const result = await modalBoardName(this.boardNames[i], headingTexts);
+    if (result === undefined) return;
+    this.boardNames[i] = result === null ? '' : result;
+    this.markDirty();
+    const panel = this.els.grid.children[i];
+    panel.querySelector('[data-name-text]').textContent = this.boardNames[i] || `Board ${i + 1}`;
+  },
+
+  toggleLock(i) {
+    this.boardLocked[i] = !this.boardLocked[i];
+    this.markDirty();
+    const panel = this.els.grid.children[i];
+    panel.classList.toggle('locked', this.boardLocked[i]);
+    const lockBtn = panel.querySelector('[data-act="lock"]');
+    lockBtn.classList.toggle('active', this.boardLocked[i]);
+    lockBtn.textContent = this.boardLocked[i] ? 'Locked' : 'Lock';
   },
 
   setColor(color) {
@@ -203,11 +237,14 @@ const Study = {
     if (!this.opening) return;
 
     const saved = await DB.studyState.get(id);
-    this.boardPaths = (saved && saved.boards && saved.boards.length)
-      ? saved.boards.map((b) => b.path || [])
-      : Array.from({ length: DEFAULT_NUM_BOARDS }, () => []);
+    const savedBoards = saved && saved.boards && saved.boards.length ? saved.boards : Array.from({ length: DEFAULT_NUM_BOARDS }, () => ({ path: [] }));
+    this.boardPaths = savedBoards.map((b) => b.path || []);
+    this.boardNames = savedBoards.map((b) => b.name || '');
+    this.boardLocked = savedBoards.map((b) => !!b.locked);
     this.annotations = (saved && saved.annotations) ? saved.annotations : {};
     this.collapsedComments = new Set();
+    this.showOutline = false;
+    this.updateOutlineButton();
     this.activeBoardIdx = 0;
     this.dirty = false;
     this.updateSaveStatus();
@@ -216,8 +253,20 @@ const Study = {
     this.rebuildBoards();
   },
 
+  toggleOutline() {
+    this.showOutline = !this.showOutline;
+    this.updateOutlineButton();
+    this.renderTreePane();
+  },
+
+  updateOutlineButton() {
+    this.els.btnToggleOutline.textContent = this.showOutline ? 'Show full notation' : 'Show key branching points';
+    this.els.btnToggleOutline.classList.toggle('active', this.showOutline);
+  },
+
   renderTreePane() {
-    const result = renderTree(this.els.tree, this.opening.tree, {
+    const renderFn = this.showOutline ? renderBranchOutline : renderTree;
+    const result = renderFn(this.els.tree, this.opening.tree, {
       onSelect: (id) => this.jumpActiveBoardTo(id),
       onPlyContext: (id) => this.openPlyStyleEditor(id),
       collapsedComments: this.collapsedComments,
@@ -288,6 +337,7 @@ const Study = {
   },
 
   jumpActiveBoardTo(nodeId) {
+    if (this.boardLocked[this.activeBoardIdx]) { toast('Board is locked — unlock it to jump from the notation'); return; }
     const path = pathToNode(this.opening.tree, nodeId);
     if (!path) return;
     this.setBoardPath(this.activeBoardIdx, path);
@@ -349,6 +399,12 @@ const Study = {
     const panel = this.els.grid.children[i];
     panel.querySelector('[data-note]').value = anno.text || '';
     panel.querySelector('[data-breadcrumb]').textContent = this.breadcrumbFor(this.boardPaths[i]) || 'Starting position';
+    panel.querySelector('[data-name-text]').textContent = this.boardNames[i] || `Board ${i + 1}`;
+    const locked = !!this.boardLocked[i];
+    panel.classList.toggle('locked', locked);
+    const lockBtn = panel.querySelector('[data-act="lock"]');
+    lockBtn.classList.toggle('active', locked);
+    lockBtn.textContent = locked ? 'Locked' : 'Lock';
   },
 
   breadcrumbFor(path) {
@@ -366,18 +422,21 @@ const Study = {
   updateAllHighlights() {
     this.nodeEls.forEach((el) => {
       el.classList.remove('active-ply');
-      el.querySelector('.ply-dots').innerHTML = '';
+      const dots = el.querySelector('.ply-dots');
+      if (dots) dots.innerHTML = '';
     });
     for (let i = 0; i < this.boardPaths.length; i++) {
       const nodeId = this.currentNodeId(i);
       const el = this.nodeEls.get(nodeId);
       if (!el) continue;
+      const dots = el.querySelector('.ply-dots');
+      if (!dots) continue;
       if (i === this.activeBoardIdx) el.classList.add('active-ply');
       const dot = document.createElement('span');
       dot.className = 'board-dot';
       dot.style.background = BOARD_COLORS[i % BOARD_COLORS.length];
-      dot.title = `Board ${i + 1}`;
-      el.querySelector('.ply-dots').appendChild(dot);
+      dot.title = this.boardNames[i] || `Board ${i + 1}`;
+      dots.appendChild(dot);
     }
   },
 
@@ -403,7 +462,7 @@ const Study = {
     if (!this.opening) return;
     const record = {
       openingId: this.opening.id,
-      boards: this.boardPaths.map((path) => ({ path })),
+      boards: this.boardPaths.map((path, i) => ({ path, name: this.boardNames[i] || '', locked: !!this.boardLocked[i] })),
       annotations: this.annotations,
       updatedAt: Date.now(),
     };

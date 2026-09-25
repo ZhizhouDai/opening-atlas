@@ -115,6 +115,48 @@ function modalPlyStyleEditor(existing, opts = {}) {
   });
 }
 
+// Names a study board: a free-text name, or pick one of the repertoire's
+// existing headings. Resolves to the chosen name string to save, null to
+// reset to the default "Board N" label, or undefined if cancelled.
+function modalBoardName(currentName, headingTexts) {
+  return new Promise((resolve) => {
+    const { overlay, box } = _buildOverlay();
+    const options = [...new Set(headingTexts.filter(Boolean))];
+    box.innerHTML = `
+      <p class="modal-message">Name this board</p>
+      <input type="text" class="modal-input" placeholder="Board name" />
+      ${options.length ? `
+      <p class="modal-section-label">Or pick a heading from this repertoire</p>
+      <div class="modal-heading-list">
+        ${options.map((h, i) => `<button type="button" class="branch-menu-item" data-idx="${i}"></button>`).join('')}
+      </div>` : ''}
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost danger" data-act="reset">Reset</button>
+        <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" data-act="ok">Save</button>
+      </div>
+    `;
+    const input = box.querySelector('.modal-input');
+    input.value = currentName || '';
+    [...box.querySelectorAll('.modal-heading-list .branch-menu-item')].forEach((b, i) => {
+      b.textContent = options[i];
+      b.addEventListener('click', () => { input.value = options[i]; input.focus(); });
+    });
+
+    const close = (result) => { overlay.remove(); resolve(result); };
+    box.querySelector('[data-act="cancel"]').addEventListener('click', () => close(undefined));
+    box.querySelector('[data-act="reset"]').addEventListener('click', () => close(null));
+    const save = () => close(input.value.trim() || null);
+    box.querySelector('[data-act="ok"]').addEventListener('click', save);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') save();
+      if (e.key === 'Escape') close(undefined);
+    });
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(undefined); });
+    requestAnimationFrame(() => { input.focus(); input.select(); });
+  });
+}
+
 function modalConfirm(message, opts = {}) {
   return new Promise((resolve) => {
     const { overlay, box } = _buildOverlay();
