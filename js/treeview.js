@@ -5,7 +5,9 @@
 // "the main move" — becomes its own equally-indented continuation. None of
 // them stays inline while the others get demoted into parentheses. A move
 // that carries a heading also always starts its own line, even if it isn't
-// itself a branch point, since a named line deserves a visual break.
+// itself a branch point, since a named line deserves a visual break. Bold
+// and boxed emphasis, by contrast, never force a line break — they're pure
+// inline styling.
 
 const MARK_GLYPHS = ['', '!', '!!', '!?', '?!', '?', '??'];
 const MARK_COLORS = ['none', 'green', 'red', 'blue', 'yellow', 'orange', 'purple'];
@@ -17,15 +19,15 @@ const MARK_COLORS = ['none', 'green', 'red', 'blue', 'yellow', 'orange', 'purple
 // currently present in the tree.
 //
 // opts:
-//   onSelect(nodeId)                     — click a move
-//   headings: { [nodeId]: {text,level} } — optional, Study page only
-//   onHeadingContext(nodeId)             — right-click a move to edit its heading
+//   onSelect(nodeId)     — click a move
+//   plyStyles: { [nodeId]: {heading,level,bold,boxed} } — optional, Study page only
+//   onPlyContext(nodeId) — right-click a move to edit its heading/emphasis
 //   collapsedComments: Set<key>          — optional, Study page only
 //   onToggleComment(key)                 — click a comment to collapse/expand it
 function renderTree(container, rootNode, opts = {}) {
   const onSelect = opts.onSelect;
-  const headings = opts.headings || {};
-  const onHeadingContext = opts.onHeadingContext;
+  const plyStyles = opts.plyStyles || {};
+  const onPlyContext = opts.onPlyContext;
   const collapsedComments = opts.collapsedComments;
   const onToggleComment = opts.onToggleComment;
   const nodeEls = new Map();
@@ -71,11 +73,11 @@ function renderTree(container, rootNode, opts = {}) {
   }
 
   function appendHeading(parentEl, nodeId) {
-    const heading = headings[nodeId];
-    if (!heading || !heading.text) return;
+    const style = plyStyles[nodeId];
+    if (!style || !style.heading) return;
     const h = document.createElement('div');
-    h.className = 'tree-heading level-' + (heading.level === 2 ? 2 : 1);
-    h.textContent = heading.text;
+    h.className = 'tree-heading level-' + (style.level === 2 ? 2 : 1);
+    h.textContent = style.heading;
     parentEl.appendChild(h);
   }
 
@@ -104,12 +106,15 @@ function renderTree(container, rootNode, opts = {}) {
     span.appendChild(dots);
     if (node.markColor && node.markColor !== 'none') span.classList.add('mark-' + node.markColor);
     if (node.markGlyph) span.classList.add('has-glyph');
+    const style = plyStyles[node.id];
+    if (style && style.bold) span.classList.add('ply-bold');
+    if (style && style.boxed) span.classList.add('ply-boxed');
     if (onSelect) span.addEventListener('click', () => onSelect(node.id));
-    if (onHeadingContext) {
+    if (onPlyContext) {
       span.classList.add('headable');
       span.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        onHeadingContext(node.id);
+        onPlyContext(node.id);
       });
     }
     lineEl.appendChild(span);
@@ -132,9 +137,14 @@ function renderTree(container, rootNode, opts = {}) {
     parentLineEl.appendChild(wrap);
   }
 
+  function hasHeadingText(nodeId) {
+    const style = plyStyles[nodeId];
+    return !!(style && style.heading);
+  }
+
   function walk(lineEl, startNode) {
     let cur = startNode;
-    while (cur.children && cur.children.length === 1 && !headings[cur.children[0].id]) {
+    while (cur.children && cur.children.length === 1 && !hasHeadingText(cur.children[0].id)) {
       appendMoveToken(lineEl, cur.children[0], false);
       cur = cur.children[0];
     }

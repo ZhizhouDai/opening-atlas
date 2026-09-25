@@ -13,7 +13,7 @@ const Study = {
   activeBoardIdx: 0,
   boardPaths: [], // one entry per board, each an array of child indices from root
   annotations: {}, // nodeId -> {arrows:[], circles:[], text:''}
-  headings: {}, // nodeId -> {text, level}
+  plyStyles: {}, // nodeId -> {heading, level, bold, boxed}
   collapsedComments: null, // Set<key>, session-only reading aid
   boards: [], // Board instances, parallel to boardPaths
   nodeEls: new Map(),
@@ -74,9 +74,9 @@ const Study = {
         <p class="board-breadcrumb muted" data-breadcrumb></p>
         <div class="anno-toolbar">
           <span class="anno-label">Draw:</span>
-          <div class="anno-colors" data-anno-colors>
-            ${['green', 'red', 'blue', 'yellow', 'orange', 'purple'].map((c) => `<button type="button" class="swatch swatch-${c}" data-color="${c}" title="${c}"></button>`).join('')}
-          </div>
+          <select class="anno-color-select" data-anno-select>
+            ${['green', 'red', 'blue', 'yellow', 'orange', 'purple'].map((c) => `<option value="${c}">${c[0].toUpperCase() + c.slice(1)}</option>`).join('')}
+          </select>
           <button type="button" class="btn btn-ghost tiny" data-act="clear-anno">Clear</button>
         </div>
         <textarea class="board-note" data-note placeholder="Notes on this position…" rows="2"></textarea>
@@ -97,14 +97,14 @@ const Study = {
       panel.querySelector('[data-act="next"]').addEventListener('click', (e) => { this.setActiveBoard(i); this.stepBoard(i, 1, e.currentTarget); });
       panel.querySelector('[data-act="reset"]').addEventListener('click', () => { this.setActiveBoard(i); this.setBoardPath(i, []); });
       panel.querySelector('[data-act="close"]').addEventListener('click', () => this.removeBoard(i));
-      panel.querySelectorAll('[data-anno-colors] button').forEach((b) => {
-        b.addEventListener('click', () => {
-          this.setActiveBoard(i);
-          board.setDrawColor(b.dataset.color);
-          panel.querySelectorAll('[data-anno-colors] button').forEach((x) => x.classList.remove('active'));
-          b.classList.add('active');
-        });
+      const colorSelect = panel.querySelector('[data-anno-select]');
+      const syncColorSelect = () => { colorSelect.style.color = ANNOTATION_COLORS[colorSelect.value] || ''; };
+      colorSelect.addEventListener('change', () => {
+        this.setActiveBoard(i);
+        board.setDrawColor(colorSelect.value);
+        syncColorSelect();
       });
+      syncColorSelect();
       panel.querySelector('[data-act="clear-anno"]').addEventListener('click', () => {
         board.clearAnnotations();
         this.onAnnotate(i, { arrows: [], circles: [] });
@@ -115,7 +115,6 @@ const Study = {
         this.annotations[nodeId].text = panel.querySelector('[data-note]').value;
         this.markDirty();
       });
-      panel.querySelectorAll('[data-anno-colors] button')[0].classList.add('active');
       panel.addEventListener('mousedown', () => this.setActiveBoard(i));
     }
     this.updateBoardChrome();
@@ -209,7 +208,7 @@ const Study = {
       ? saved.boards.map((b) => b.path || [])
       : Array.from({ length: DEFAULT_NUM_BOARDS }, () => []);
     this.annotations = (saved && saved.annotations) ? saved.annotations : {};
-    this.headings = (saved && saved.headings) ? saved.headings : {};
+    this.plyStyles = (saved && saved.plyStyles) ? saved.plyStyles : {};
     this.collapsedComments = new Set();
     this.activeBoardIdx = 0;
     this.dirty = false;
@@ -222,8 +221,8 @@ const Study = {
   renderTreePane() {
     const result = renderTree(this.els.tree, this.opening.tree, {
       onSelect: (id) => this.jumpActiveBoardTo(id),
-      headings: this.headings,
-      onHeadingContext: (id) => this.openHeadingEditor(id),
+      plyStyles: this.plyStyles,
+      onPlyContext: (id) => this.openPlyStyleEditor(id),
       collapsedComments: this.collapsedComments,
       onToggleComment: (key) => this.toggleComment(key),
     });
@@ -233,12 +232,12 @@ const Study = {
     this.updateCollapseButtonLabel();
   },
 
-  async openHeadingEditor(nodeId) {
-    const existing = this.headings[nodeId];
-    const result = await modalHeadingEditor(existing);
+  async openPlyStyleEditor(nodeId) {
+    const existing = this.plyStyles[nodeId];
+    const result = await modalPlyStyleEditor(existing);
     if (result === undefined) return;
-    if (result === null) delete this.headings[nodeId];
-    else this.headings[nodeId] = result;
+    if (result === null) delete this.plyStyles[nodeId];
+    else this.plyStyles[nodeId] = result;
     this.markDirty();
     this.renderTreePane();
   },
@@ -393,7 +392,7 @@ const Study = {
       openingId: this.opening.id,
       boards: this.boardPaths.map((path) => ({ path })),
       annotations: this.annotations,
-      headings: this.headings,
+      plyStyles: this.plyStyles,
       updatedAt: Date.now(),
     };
     await DB.studyState.put(record);

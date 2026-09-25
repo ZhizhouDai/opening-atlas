@@ -260,6 +260,22 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .color-tab.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
 .opening-list { list-style: none; margin: 0 0 6px; padding: 0; max-height: 46vh; overflow-y: auto; }
+
+/* Themed scrollbars for the app's own scrollable panes, so they match the
+   dark-green flat design instead of the OS/browser default. Firefox picks
+   up scrollbar-color; Chromium-based browsers use the ::-webkit- rules. */
+.opening-list, .tree-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-faint) transparent;
+}
+.opening-list::-webkit-scrollbar, .tree-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.opening-list::-webkit-scrollbar-track, .tree-scroll::-webkit-scrollbar-track { background: transparent; }
+.opening-list::-webkit-scrollbar-thumb, .tree-scroll::-webkit-scrollbar-thumb {
+  background: var(--ink-faint);
+  border-radius: 999px;
+  border: 2px solid var(--bg-panel);
+}
+.opening-list::-webkit-scrollbar-thumb:hover, .tree-scroll::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
 .opening-item {
   display: flex;
   justify-content: space-between;
@@ -286,12 +302,12 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 
 /* ---------- move tree ---------- */
 
-.tree-scroll { max-height: 62vh; overflow-y: auto; padding-right: 4px; }
+.tree-scroll { max-height: 70vh; overflow-y: auto; padding-right: 8px; }
 .move-line { line-height: 2; }
 .continuation {
-  margin: 2px 0 2px 18px;
-  padding-left: 10px;
-  border-left: 2px solid var(--line);
+  margin: 4px 0 4px 24px;
+  padding-left: 14px;
+  border-left: 3px solid var(--ink-faint);
 }
 .move-num { color: var(--ink-faint); font-size: 13px; margin: 0 3px 0 6px; }
 .move-num:first-child { margin-left: 0; }
@@ -314,6 +330,8 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .ply.mark-yellow .ply-san { color: #e8d476; }
 .ply.mark-orange .ply-san { color: #eda05e; }
 .ply.mark-purple .ply-san { color: #bd8bef; }
+.ply.ply-bold .ply-san { font-weight: 800; }
+.ply.ply-boxed { box-shadow: inset 0 0 0 1.5px var(--ink-soft); }
 .ply-dots { display: inline-flex; gap: 2px; margin-left: 2px; }
 .board-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .tree-comment { color: var(--ink-soft); font-style: italic; font-size: 13px; margin: 0 4px; }
@@ -352,7 +370,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .save-status { font-size: 12px; color: var(--ink-soft); }
 .save-status.dirty { color: #e8d476; font-weight: 600; }
 
-.study-layout { display: grid; grid-template-columns: 420px 1fr; gap: 20px; align-items: start; }
+.study-layout { display: grid; grid-template-columns: 540px 1fr; gap: 20px; align-items: start; }
 .study-tree-panel { position: sticky; top: 92px; }
 .tree-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
 .tree-panel-header .panel-title { margin-bottom: 0; }
@@ -364,7 +382,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 
 .study-board-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 .study-board-panel {
@@ -420,11 +438,10 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 }
 .branch-menu-item:hover { background: var(--accent-soft); color: var(--accent); }
 
-.anno-toolbar { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.anno-label { font-size: 12px; color: var(--ink-soft); }
-.anno-colors { display: flex; gap: 5px; }
-.anno-colors .swatch { width: 18px; height: 18px; border-width: 2px; }
-.board-note { margin-top: 8px; min-height: 44px; font-size: 13px; }
+.anno-toolbar { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.anno-label { font-size: 12px; color: var(--ink-soft); flex-shrink: 0; }
+.anno-color-select { flex: 1; padding: 5px 8px; font-size: 13px; font-weight: 600; }
+.board-note { margin-top: 8px; min-height: 40px; font-size: 13px; }
 
 /* ---------- modal ---------- */
 
@@ -450,9 +467,11 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 }
 .modal-message { margin: 0 0 14px; color: var(--ink); font-size: 15px; }
 .modal-input { margin-bottom: 4px; }
-.modal-level-row { display: flex; gap: 8px; margin-top: 10px; }
-.modal-level-row .level-btn { flex: 1; }
-.modal-level-row .level-btn.active { border-color: var(--heading); background: var(--accent-soft); color: var(--heading); }
+.modal-section-label { font-size: 12px; color: var(--ink-soft); margin: 14px 0 6px; }
+.modal-btn-row { display: flex; gap: 8px; }
+.modal-btn-row .level-btn { flex: 1; }
+.modal-btn-row .level-btn.active { border-color: var(--heading); background: var(--accent-soft); color: var(--heading); }
+.modal-btn-row .level-btn.active[data-style] { border-color: var(--accent); color: var(--accent); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .modal-actions .danger { margin-right: auto; }
 
@@ -465,7 +484,6 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   .rep-workspace-grid { grid-template-columns: 1fr; }
   .study-layout { grid-template-columns: 1fr; }
   .study-tree-panel { position: static; }
-  .study-board-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 640px) {

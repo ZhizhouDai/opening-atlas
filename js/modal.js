@@ -37,39 +37,56 @@ function modalPrompt(message, defaultValue) {
   });
 }
 
-// Resolves to {text, level} to save/update, null to remove an existing
-// heading, or undefined if cancelled.
-function modalHeadingEditor(existing) {
+// Edits a single move's styling: an optional heading/subheading label, plus
+// independent bold and boxed emphasis toggles. Resolves to
+// {heading, level, bold, boxed} to save, null to clear everything, or
+// undefined if cancelled.
+function modalPlyStyleEditor(existing) {
   return new Promise((resolve) => {
     const { overlay, box } = _buildOverlay();
     box.innerHTML = `
-      <p class="modal-message">Label this move, e.g. "Schmidt Variation"</p>
-      <input type="text" class="modal-input" placeholder="Heading text" />
-      <div class="modal-level-row">
+      <p class="modal-message">Label or style this move</p>
+      <input type="text" class="modal-input" placeholder="Heading text, e.g. &quot;Schmidt Variation&quot;" />
+      <div class="modal-btn-row">
         <button type="button" class="btn btn-ghost level-btn" data-level="1">Heading</button>
         <button type="button" class="btn btn-ghost level-btn" data-level="2">Subheading</button>
       </div>
+      <p class="modal-section-label">Emphasis</p>
+      <div class="modal-btn-row">
+        <button type="button" class="btn btn-ghost level-btn" data-style="bold"><b>Bold</b></button>
+        <button type="button" class="btn btn-ghost level-btn" data-style="boxed">Box</button>
+      </div>
       <div class="modal-actions">
-        ${existing ? '<button type="button" class="btn btn-ghost danger" data-act="remove">Remove</button>' : ''}
+        ${existing ? '<button type="button" class="btn btn-ghost danger" data-act="remove">Clear</button>' : ''}
         <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
         <button type="button" class="btn btn-primary" data-act="ok">Save</button>
       </div>
     `;
     const input = box.querySelector('.modal-input');
-    input.value = existing ? existing.text : '';
+    input.value = existing ? existing.heading || '' : '';
     let level = existing && existing.level === 2 ? 2 : 1;
-    const levelBtns = [...box.querySelectorAll('.level-btn')];
+    let bold = !!(existing && existing.bold);
+    let boxed = !!(existing && existing.boxed);
+
+    const levelBtns = [...box.querySelectorAll('[data-level]')];
     const syncLevel = () => levelBtns.forEach((b) => b.classList.toggle('active', Number(b.dataset.level) === level));
     syncLevel();
     levelBtns.forEach((b) => b.addEventListener('click', () => { level = Number(b.dataset.level); syncLevel(); }));
+
+    const boldBtn = box.querySelector('[data-style="bold"]');
+    const boxedBtn = box.querySelector('[data-style="boxed"]');
+    const syncStyle = () => { boldBtn.classList.toggle('active', bold); boxedBtn.classList.toggle('active', boxed); };
+    syncStyle();
+    boldBtn.addEventListener('click', () => { bold = !bold; syncStyle(); });
+    boxedBtn.addEventListener('click', () => { boxed = !boxed; syncStyle(); });
 
     const close = (result) => { overlay.remove(); resolve(result); };
     box.querySelector('[data-act="cancel"]').addEventListener('click', () => close(undefined));
     const removeBtn = box.querySelector('[data-act="remove"]');
     if (removeBtn) removeBtn.addEventListener('click', () => close(null));
     const save = () => {
-      const text = input.value.trim();
-      close(text ? { text, level } : undefined);
+      const heading = input.value.trim();
+      close((heading || bold || boxed) ? { heading, level, bold, boxed } : null);
     };
     box.querySelector('[data-act="ok"]').addEventListener('click', save);
     input.addEventListener('keydown', (e) => {
