@@ -611,7 +611,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 @media print {
   body > *:not(#printRoot) { display: none !important; }
   #printRoot { display: block !important; }
-  @page { size: A5 portrait; margin: 12mm; }
+  @page { size: A5 portrait; margin: 6mm; }
   /* Named page for the standalone "export the entire tree" printout — A4
      since it's a bigger, denser, diagram-free reference sheet rather than
      the per-line A5 booklet spread. */
@@ -641,15 +641,15 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   #printRoot .print-page-title {
     font-size: 10pt;
     font-weight: 700;
-    margin: 0 0 2mm;
+    margin: 0 0 1.2mm;
     color: var(--heading);
   }
   .print-page-boards .print-page-title { text-align: right; }
-  #printRoot .print-breadcrumb { font-size: 8pt; color: #555; margin-bottom: 4mm; }
+  #printRoot .print-breadcrumb { font-size: 8pt; color: #555; margin-bottom: 2mm; }
 
   .print-notation .move-line { line-height: 1.15; }
   #printRoot .print-notation .tree-comment { font-size: 8.5pt; color: #444; }
-  #printRoot .print-notation .tree-heading { font-size: 10pt; margin: 2mm 0 0.5mm; }
+  #printRoot .print-notation .tree-heading { font-size: 10pt; margin: 1.2mm 0 0.3mm; }
   #printRoot .print-notation .tree-heading.level-1 { color: var(--heading); }
   #printRoot .print-notation .tree-heading.level-2 { color: var(--heading-soft); }
   #printRoot .print-notation .tree-heading.level-3 { color: var(--heading-faint); }
@@ -660,17 +660,17 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   #printRoot .ply.mark-orange .ply-san { color: #b5651d; }
   #printRoot .ply.mark-purple .ply-san { color: #7a4bb0; }
   .print-notation .continuation {
-    margin: 1mm 0 1mm 3mm;
-    padding-left: 1.5mm;
+    margin: 0.5mm 0 0.5mm 2.5mm;
+    padding-left: 1mm;
     border-left-width: 1px;
   }
   .print-notation .continuation-stub {
     display: inline-block;
     width: 31%;
-    margin: 1mm 1% 1mm 0;
+    margin: 0.5mm 1% 0.5mm 0;
     vertical-align: top;
   }
-  .print-notation .continuation-stub .continuation-stub { display: block; width: auto; margin: 1mm 0 1mm 3mm; }
+  .print-notation .continuation-stub .continuation-stub { display: block; width: auto; margin: 0.5mm 0 0.5mm 2.5mm; }
 
   .print-boards { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-content: start; }
   .print-board-block { text-align: center; }
