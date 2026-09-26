@@ -20,6 +20,7 @@
   --danger-soft: #fbe6e3;
   --heading: #9c6b1f;
   --heading-soft: #b8863c;
+  --heading-faint: #c9a468;
   --radius: 12px;
   --shadow: 0 1px 2px rgba(30, 43, 26, 0.06), 0 6px 16px rgba(30, 43, 26, 0.05);
 }
@@ -362,7 +363,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .continuation:first-child > .tree-heading { margin-top: 0; }
 .tree-heading.level-1 { font-size: 15px; font-weight: 600; }
 .tree-heading.level-2 { font-size: 13px; font-weight: 500; font-style: italic; color: var(--heading-soft); margin-top: 6px; }
-.tree-heading.level-3 { font-size: 12px; font-weight: 400; font-style: italic; color: var(--ink-faint); margin-top: 4px; }
+.tree-heading.level-3 { font-size: 12px; font-weight: 500; font-style: italic; color: var(--heading-faint); margin-top: 4px; }
 
 .branch-outline-ellipsis { color: var(--ink-faint); margin: 0 6px; font-weight: 600; }
 .ply.headable:hover { box-shadow: inset 0 -2px 0 var(--heading); }
@@ -506,7 +507,10 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .modal-section-label { font-size: 12px; color: var(--ink-soft); margin: 14px 0 6px; }
 .modal-btn-row { display: flex; gap: 8px; }
 .modal-btn-row > .btn { flex: 1; }
+.modal-btn-row .level-btn[data-level] { font-size: 12.5px; padding: 9px 4px; white-space: nowrap; }
 .modal-btn-row .level-btn.active { border-color: var(--heading); background: var(--accent-soft); color: var(--heading); }
+.modal-btn-row .level-btn.active[data-level="2"] { border-color: var(--heading-soft); color: var(--heading-soft); }
+.modal-btn-row .level-btn.active[data-level="3"] { border-color: var(--heading-faint); color: var(--heading-faint); }
 .modal-btn-row .level-btn.active[data-style] { border-color: var(--accent); color: var(--accent); }
 .modal-btn-row > .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .modal-heading-list {
@@ -560,7 +564,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-index-entry input[type="checkbox"] { margin: 0; flex-shrink: 0; }
 .booklet-index-entry .entry-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--heading); }
 .booklet-index-subheading-row .entry-label { color: var(--heading-soft); font-style: italic; }
-.booklet-index-subheading2-row .entry-label { color: var(--ink-faint); font-style: italic; font-size: 12px; }
+.booklet-index-subheading2-row .entry-label { color: var(--heading-faint); font-style: italic; font-size: 12px; }
 .booklet-index-empty { font-size: 13px; padding: 6px 2px; }
 
 .booklet-slot { min-height: 220px; }
