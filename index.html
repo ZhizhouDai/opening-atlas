@@ -149,6 +149,7 @@
       </div>
       <select id="studyOpeningSelect"></select>
       <div class="study-save-row">
+        <button id="btnToggleBooklet" class="btn btn-ghost">Booklet mode</button>
         <span class="save-status" id="studySaveStatus">All changes saved</span>
         <button id="btnSaveStudy" class="btn btn-primary">Save</button>
       </div>
@@ -178,7 +179,63 @@
         <div class="study-board-grid" id="studyBoardGrid"></div>
       </div>
     </div>
+
+    <!-- BOOKLET MODE -->
+    <div id="bookletWorkspace" class="booklet-layout" hidden>
+      <aside class="panel booklet-index">
+        <div class="booklet-index-header">
+          <h3 class="panel-title small-title">Index</h3>
+          <button id="btnExitBooklet" class="btn btn-ghost tiny">Exit booklet mode</button>
+        </div>
+        <p class="muted small-note">Click a heading to load it into the active booklet. Check entries to export a selection.</p>
+        <div class="booklet-export-row">
+          <button id="btnExportSelected" class="btn btn-ghost tiny">Export selected</button>
+          <button id="btnExportAll" class="btn btn-ghost tiny">Export all</button>
+        </div>
+        <div class="tree-scroll booklet-index-tree" id="bookletIndexTree"></div>
+      </aside>
+
+      <div class="booklet-slot panel" data-slot="1">
+        <div class="booklet-slot-header">
+          <div class="booklet-slot-breadcrumb" id="bookletBreadcrumb1">
+            <span class="muted">Booklet 1 — click an index entry to load a line here.</span>
+          </div>
+        </div>
+        <div class="booklet-other-headings muted small-note" id="bookletOthers1"></div>
+        <div class="booklet-slot-body">
+          <div class="tree-scroll booklet-notation" id="bookletTree1"></div>
+          <div class="booklet-boards-col">
+            <div class="board-grid-toolbar">
+              <span class="muted" id="bookletBoardCount1"></span>
+              <button type="button" class="btn btn-ghost tiny" data-act="add-board">+ Add board</button>
+            </div>
+            <div class="study-board-grid booklet-board-grid" id="bookletBoards1"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="booklet-slot panel" data-slot="2">
+        <div class="booklet-slot-header">
+          <div class="booklet-slot-breadcrumb" id="bookletBreadcrumb2">
+            <span class="muted">Booklet 2 — click an index entry to load a line here.</span>
+          </div>
+        </div>
+        <div class="booklet-other-headings muted small-note" id="bookletOthers2"></div>
+        <div class="booklet-slot-body">
+          <div class="tree-scroll booklet-notation" id="bookletTree2"></div>
+          <div class="booklet-boards-col">
+            <div class="board-grid-toolbar">
+              <span class="muted" id="bookletBoardCount2"></span>
+              <button type="button" class="btn btn-ghost tiny" data-act="add-board">+ Add board</button>
+            </div>
+            <div class="study-board-grid booklet-board-grid" id="bookletBoards2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
+
+  <div id="printRoot"></div>
 
 </main>
 
@@ -193,6 +250,7 @@
 <script src="js/treeview.js"></script>
 <script src="js/repertoire.js"></script>
 <script src="js/study.js"></script>
+<script src="js/booklet.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

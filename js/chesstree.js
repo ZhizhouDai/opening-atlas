@@ -195,6 +195,58 @@ function mainlineLeaf(node) {
   return cur;
 }
 
+// Every leaf (no children) within a subtree — the possible "endings" a line
+// starting at `node` can reach. Usually one (the mainline), more if the
+// line itself branches further.
+function allLeaves(node) {
+  if (!node.children.length) return [node];
+  return node.children.flatMap(allLeaves);
+}
+
+// Groups one opening's heading nodes into a 2-level index — top-level
+// headings, each with the subheadings nested inside its own subtree —
+// matching the Heading/Subheading choice already offered when labeling a
+// move. A subheading with no level-1 ancestor heading is treated as
+// top-level too, so nothing is ever silently dropped from the index.
+// Returns [{ node, subheadings: [{ node }] }].
+function buildOpeningHeadingIndex(opening) {
+  const root = opening.tree;
+  const headingNodes = collectHeadingNodes(root);
+  const entries = [];
+  const byId = new Map();
+  headingNodes.forEach((h) => {
+    const path = pathToNode(root, h.id) || [];
+    let cur = root;
+    let nearestH1 = null;
+    for (let i = 0; i < path.length - 1; i++) {
+      cur = cur.children[path[i]];
+      if (cur.heading && cur.headingLevel === 1) nearestH1 = cur;
+    }
+    const entry = { node: h, subheadings: [] };
+    byId.set(h.id, entry);
+    if (h.headingLevel === 2 && nearestH1 && byId.has(nearestH1.id)) {
+      byId.get(nearestH1.id).subheadings.push(entry);
+    } else {
+      entries.push(entry);
+    }
+  });
+  return entries;
+}
+
+// A synthetic wrapper node so renderTree() can render just the subtree
+// starting at `node` (including node's own move and heading) without
+// pulling in its siblings — used by Booklet mode to isolate one named line.
+function wrapAsRoot(node) {
+  return {
+    id: 'synthetic-root:' + node.id, ply: node.ply - 1, san: null, uci: null,
+    fenBefore: null, fenAfter: node.fenBefore,
+    commentBefore: '', commentAfter: '',
+    markColor: null, markGlyph: null,
+    heading: '', headingLevel: 1, bold: false, boxed: false,
+    children: [node],
+  };
+}
+
 // Total node count, for quick stats display.
 function countNodes(node) {
   let n = 1;

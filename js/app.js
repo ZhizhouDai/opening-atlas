@@ -37,6 +37,7 @@ async function setView(view) {
     }
     Study.dirty = false;
   }
+  if (leavingStudy && typeof Booklet !== 'undefined' && Booklet.active) Booklet.exit();
   if (view === 'study' && typeof Study !== 'undefined') await Study.refreshOpenings();
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${view}`));
   document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
@@ -48,6 +49,7 @@ async function boot() {
   await DB.init();
   await Repertoire.init();
   await Study.init();
+  await Booklet.init();
 
   document.getElementById('nav').addEventListener('click', (e) => {
     const btn = e.target.closest('.tab-btn');

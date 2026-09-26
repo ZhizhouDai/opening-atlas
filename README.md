@@ -71,6 +71,31 @@ on your PC gives you two separate, independent libraries.
   which position each board shows, every arrow/circle/note/heading) is kept
   in memory until you hit **Save**, which persists it for next time.
 
+### Booklet mode
+
+A dedicated reference/comparison view, toggled from the Study & Analysis
+toolbar:
+
+- A repertoire-wide **index** on the left — every opening, with its
+  headings and their subheadings nested underneath (three levels: opening
+  → heading → subheading) — narrow enough to stay out of the way.
+- Two independent **booklets** side by side. Click an index entry to load
+  it into whichever booklet is active (click a booklet to make it active);
+  the two can show lines from completely different repertoires, for
+  side-by-side comparison. Each booklet shows the full notation (with
+  comments) for just that line, links to the opening's other headings for
+  quick in-place switching, and a handful of boards auto-populated at the
+  heading position, the subheading position, the line's own ending(s), and
+  a freely-adjustable "selected move" board — add or remove boards, and
+  step any of them with ◀ / ▶ independently. All of it (which line each
+  booklet shows, every board's position) saves automatically.
+- **Export to PDF**: check specific headings in the index and "Export
+  selected", or "Export all" for the whole repertoire in the order it
+  appears in the index. Opens the browser's print dialog (choose "Save as
+  PDF") with a table of contents page followed by one page per line — A5
+  portrait, "Book Antiqua", heading/subheading top-left, notation and
+  comments on the left, reference boards on the right.
+
 ## Design
 
 Flat UI with a light background and a green accent (Fraunces for headings,
