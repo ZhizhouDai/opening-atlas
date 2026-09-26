@@ -88,9 +88,10 @@ toolbar:
   comments) for that line, starting from the opening's true root so the
   moves leading up to it are never cut off. Any other headed line branching
   off along the way — at any depth — appears inline in the same tree as a
-  compressed stub (just its heading/subheading and its own single move);
-  clicking a stub switches the whole booklet to that line, quick in-place
-  switching without leaving the tree. The notation panel has a drag handle
+  compressed stub (just its heading/subheading, no move) laid out up to
+  three to a row to save space; clicking a stub switches the whole booklet
+  to that line, quick in-place switching without leaving the tree. The
+  notation panel has a drag handle
   to resize it to fit a whole line without scrolling. A handful of boards
   auto-populate at the heading position, the subheading position, the
   subheading 2 position, the line's own ending(s), and a freely-adjustable
@@ -110,6 +111,11 @@ toolbar:
   name followed by the full notation tree and comments, then a "right" page
   with that line's own heading and its reference boards in a grid; printed
   double-sided, the two land on facing pages.
+- **Export the full tree**: each opening in the index has its own "Full
+  tree (A4)" button — a separate, standalone export of that opening's
+  complete move tree (every branch and heading, no diagrams) as a dense
+  text-only reference sheet on A4 paper, for when you want the whole
+  repertoire at a glance rather than one line at a time.
 
 ## Design
 

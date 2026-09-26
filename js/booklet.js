@@ -97,7 +97,16 @@ const Booklet = {
         wrap.className = 'booklet-index-opening';
         const title = document.createElement('div');
         title.className = 'booklet-index-opening-name';
-        title.textContent = (color === 'white' ? '♔ ' : '♚ ') + opening.name;
+        const titleText = document.createElement('span');
+        titleText.textContent = (color === 'white' ? '♔ ' : '♚ ') + opening.name;
+        title.appendChild(titleText);
+        const exportTreeBtn = document.createElement('button');
+        exportTreeBtn.type = 'button';
+        exportTreeBtn.className = 'btn btn-ghost tiny booklet-index-export-tree';
+        exportTreeBtn.textContent = 'Full tree (A4)';
+        exportTreeBtn.title = "Print this opening's entire notation tree, no diagrams, on A4 paper";
+        exportTreeBtn.addEventListener('click', (e) => { e.stopPropagation(); this.exportFullTree(opening); });
+        title.appendChild(exportTreeBtn);
         wrap.appendChild(title);
         const addRow = (entry, depth) => {
           wrap.appendChild(this.buildIndexRow(opening, entry.node, depth));
@@ -450,6 +459,27 @@ const Booklet = {
     }
     if (!targets.length) { toast('Nothing to export'); return; }
     this.buildPrintDocument(targets);
+    setTimeout(() => window.print(), 50);
+  },
+
+  // A separate, standalone export: the opening's complete move tree (every
+  // branch and heading, real headings not stubs) as plain notation with no
+  // board diagrams, on A4 paper — a denser reference sheet than the per-line
+  // booklet spread, for when you want the whole repertoire at a glance.
+  exportFullTree(opening) {
+    const root = document.getElementById('printRoot');
+    root.innerHTML = '';
+    const page = document.createElement('div');
+    page.className = 'print-page print-full-tree-page';
+    const title = document.createElement('div');
+    title.className = 'print-page-title';
+    title.textContent = (opening.color === 'white' ? 'White' : 'Black') + ' · ' + opening.name;
+    page.appendChild(title);
+    const notationCol = document.createElement('div');
+    notationCol.className = 'print-notation';
+    renderTree(notationCol, opening.tree, {});
+    page.appendChild(notationCol);
+    root.appendChild(page);
     setTimeout(() => window.print(), 50);
   },
 

@@ -293,7 +293,8 @@ function renderBranchOutline(container, rootNode, opts = {}) {
 // never starts "cold" mid-line. Any other headed line that branches off
 // that path — at any depth, including nested subheadings — appears inline
 // in the same tree as a compressed "stub": just its heading/subheading
-// label and its own single move, no further moves, no comments. Clicking a
+// label, no move and no comments, so several can sit side by side (see the
+// .continuation-stub CSS) instead of each claiming a full line. Clicking a
 // stub is expected to switch the booklet to that other line entirely
 // (opts.onSelectStub), while clicking anything on the real path just moves
 // a board there (opts.onSelectFull) — same split the old separate "other
@@ -369,16 +370,22 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
     parentEl.appendChild(c);
   }
 
-  function appendHeading(parentEl, node) {
+  function appendHeading(parentEl, node, stub) {
     if (!node.heading) return;
     const h = document.createElement('div');
     h.className = 'tree-heading level-' + (node.headingLevel === 3 ? 3 : node.headingLevel === 2 ? 2 : 1);
     h.textContent = node.heading;
+    if (stub) {
+      h.classList.add('tree-heading-stub');
+      if (onSelectStub) h.addEventListener('click', () => onSelectStub(node.id));
+      if (onPlyContext) h.addEventListener('contextmenu', (e) => { e.preventDefault(); onPlyContext(node.id); });
+    }
     parentEl.appendChild(h);
+    nodeEls.set(node.id, h);
   }
 
-  function appendToken(lineEl, node, forceLabel, stub) {
-    if (!stub && node.commentBefore) appendComment(lineEl, node.id + ':before', node.commentBefore);
+  function appendToken(lineEl, node, forceLabel) {
+    if (node.commentBefore) appendComment(lineEl, node.id + ':before', node.commentBefore);
     if (node.ply % 2 === 1) {
       const num = document.createElement('span');
       num.className = 'move-num';
@@ -404,16 +411,14 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
     if (node.markGlyph) span.classList.add('has-glyph');
     if (node.bold) span.classList.add('ply-bold');
     if (node.boxed) span.classList.add('ply-boxed');
-    if (stub) span.classList.add('ply-stub');
-    const onSelect = stub ? onSelectStub : onSelectFull;
-    if (onSelect) span.addEventListener('click', () => onSelect(node.id));
+    if (onSelectFull) span.addEventListener('click', () => onSelectFull(node.id));
     if (onPlyContext) {
       span.classList.add('headable');
       span.addEventListener('contextmenu', (e) => { e.preventDefault(); onPlyContext(node.id); });
     }
     lineEl.appendChild(span);
     nodeEls.set(node.id, span);
-    if (!stub && node.commentAfter) appendComment(lineEl, node.id + ':after', node.commentAfter);
+    if (node.commentAfter) appendComment(lineEl, node.id + ':after', node.commentAfter);
   }
 
   // Nearest heading-carrying descendants of `node` (not including `node`
@@ -442,16 +447,24 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
     return result;
   }
 
+  // A "full" branch shows its heading (if any) followed by its own move and
+  // the rest of the real continuation. A stub branch shows only its heading
+  // — no move, no comments — since it exists purely to mark where another
+  // named line branches off; clicking it switches to that line entirely.
   function startBranch(parentLineEl, node, full) {
     const wrap = document.createElement('div');
     wrap.className = 'continuation' + (full ? '' : ' continuation-stub');
-    appendHeading(wrap, node);
-    const line = document.createElement('div');
-    line.className = 'move-line';
-    appendToken(line, node, true, !full);
-    wrap.appendChild(line);
-    if (full) walkFull(line, node);
-    else walkStub(line, node);
+    if (full) {
+      appendHeading(wrap, node);
+      const line = document.createElement('div');
+      line.className = 'move-line';
+      appendToken(line, node, true);
+      wrap.appendChild(line);
+      walkFull(line, node);
+    } else {
+      appendHeading(wrap, node, true);
+      walkStub(wrap, node);
+    }
     parentLineEl.appendChild(wrap);
   }
 
@@ -461,7 +474,7 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
       const branches = branchesOf(cur);
       if (!branches.length) return;
       if (branches.length === 1 && branches[0].full && !branches[0].node.heading) {
-        appendToken(lineEl, branches[0].node, false, false);
+        appendToken(lineEl, branches[0].node, false);
         cur = branches[0].node;
         continue;
       }
@@ -470,7 +483,7 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
     }
   }
 
-  function walkStub(lineEl, node) {
-    stubRootsFrom(node).forEach((k) => startBranch(lineEl, k, false));
+  function walkStub(containerEl, node) {
+    stubRootsFrom(node).forEach((k) => startBranch(containerEl, k, false));
   }
 }

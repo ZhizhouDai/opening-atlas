@@ -531,7 +531,17 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-index-tree { flex: 1; }
 
 .booklet-index-opening { margin-bottom: 12px; }
-.booklet-index-opening-name { font-weight: 700; font-size: 13px; color: var(--ink); margin-bottom: 3px; }
+.booklet-index-opening-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+.booklet-index-export-tree { flex-shrink: 0; font-size: 10.5px; padding: 2px 6px; }
 .booklet-index-heading-row { margin-left: 8px; }
 .booklet-index-subheading-row { margin-left: 18px; }
 .booklet-index-subheading2-row { margin-left: 28px; }
@@ -572,11 +582,23 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-board-grid .study-board-panel { max-width: 260px; }
 .booklet-board-label { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
 
-/* "other lines" stubs woven into the booklet notation tree: heading/subheading
-   label plus a single muted move, no comments, no continuation past it. */
-.continuation-stub { opacity: 0.75; }
-.ply-stub { font-style: italic; }
-.ply-stub .ply-san { color: var(--ink-soft); }
+/* "other lines" stubs woven into the booklet notation tree: just the
+   heading/subheading label (no move, no comments, no continuation past it),
+   clickable to switch the booklet to that line. Laid out up to three to a
+   row to save space, since each is just a short label; a stub nested inside
+   another stub (a further subheading of an "other line") drops back to a
+   plain full-width row so it doesn't shrink into an unreadable sliver. */
+.continuation-stub {
+  display: inline-block;
+  width: 31%;
+  min-width: 130px;
+  margin: 2px 1% 2px 0;
+  vertical-align: top;
+  opacity: 0.8;
+}
+.continuation-stub .continuation-stub { display: block; width: auto; margin: 2px 0 2px 12px; }
+.tree-heading-stub { cursor: pointer; }
+.tree-heading-stub:hover { text-decoration: underline; }
 
 /* ---------- print / PDF export ---------- */
 
@@ -586,6 +608,11 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   body > *:not(#printRoot) { display: none !important; }
   #printRoot { display: block !important; }
   @page { size: A5 portrait; margin: 12mm; }
+  /* Named page for the standalone "export the entire tree" printout — A4
+     since it's a bigger, denser, diagram-free reference sheet rather than
+     the per-line A5 booklet spread. */
+  @page a4-tree { size: A4 portrait; margin: 15mm; }
+  .print-full-tree-page { page: a4-tree; }
   #printRoot, #printRoot * {
     font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', Georgia, serif;
     color: #1a1a1a;
@@ -624,6 +651,13 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
     padding-left: 1.5mm;
     border-left-width: 1px;
   }
+  .print-notation .continuation-stub {
+    display: inline-block;
+    width: 31%;
+    margin: 1mm 1% 1mm 0;
+    vertical-align: top;
+  }
+  .print-notation .continuation-stub .continuation-stub { display: block; width: auto; margin: 1mm 0 1mm 3mm; }
 
   .print-boards { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-content: start; }
   .print-board-block { text-align: center; }
