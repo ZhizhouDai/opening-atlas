@@ -109,12 +109,13 @@ toolbar:
   outline — every heading, subheading, and subheading 2 — even ones that
   don't get their own page, so it always matches what you'd see in the
   index panel. Opens the browser's print dialog (choose "Save as PDF") with
-  a two-column table of contents page, then each line as a two-page spread
+  a two-column table of contents page, a blank filler page (so the first
+  line always starts on an odd, right-hand page, as a printed reference
+  book's sections conventionally do), then each line as a two-page spread
   — A5 portrait, "Book Antiqua" — a "left" page with the heading and opening
   name followed by the full notation tree and comments, then a "right" page
   with that line's own heading and its reference boards (up to three per
-  row) in a grid; printed
-  double-sided, the two land on facing pages.
+  row) in a grid; printed double-sided, the two land on facing pages.
 - **Export the full tree**: each opening in the index has its own "Full
   tree (A4)" button — a separate, standalone export of that opening's
   complete move tree (every branch and heading, no diagrams) as a dense

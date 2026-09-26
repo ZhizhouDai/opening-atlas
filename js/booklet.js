@@ -521,6 +521,14 @@ const Booklet = {
     });
     root.appendChild(idxPage);
 
+    // The index is one page (page 1, odd), so without this the first
+    // notation page would land on page 2 (even) — a blank filler page
+    // pushes it to page 3, an odd/right-hand page, matching how a printed,
+    // double-sided reference book conventionally starts each new section.
+    const blankPage = document.createElement('div');
+    blankPage.className = 'print-page print-blank-page';
+    root.appendChild(blankPage);
+
     targets.forEach(({ opening, node }) => this.buildPrintPage(opening, node).forEach((p) => root.appendChild(p)));
   },
 
