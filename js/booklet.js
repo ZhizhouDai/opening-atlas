@@ -493,25 +493,30 @@ const Booklet = {
     idxTitle.className = 'print-index-title';
     idxTitle.textContent = 'Opening Atlas — Index';
     idxPage.appendChild(idxTitle);
-    const groups = [];
-    targets.forEach((t) => {
-      let g = groups.find((x) => x.opening.id === t.opening.id);
-      if (!g) { g = { opening: t.opening, nodes: [] }; groups.push(g); }
-      g.nodes.push(t.node);
-    });
-    groups.forEach((g) => {
+
+    // The index always lists an involved opening's FULL heading outline —
+    // every heading, subheading, and subheading 2 — not just the ones that
+    // get their own printed page. "Export all" only prints the most
+    // specific heading along each line (see exportPdf), so a heading with
+    // a subheading wouldn't otherwise appear anywhere in the document; it
+    // still belongs in the index as the outline's actual structure.
+    const openings = [];
+    targets.forEach((t) => { if (!openings.some((o) => o.id === t.opening.id)) openings.push(t.opening); });
+    openings.forEach((opening) => {
       const owrap = document.createElement('div');
       owrap.className = 'print-index-opening';
       const oname = document.createElement('div');
       oname.className = 'print-index-opening-name';
-      oname.textContent = (g.opening.color === 'white' ? 'White' : 'Black') + ' — ' + g.opening.name;
+      oname.textContent = (opening.color === 'white' ? 'White' : 'Black') + ' — ' + opening.name;
       owrap.appendChild(oname);
-      g.nodes.forEach((node) => {
+      const addRow = (entry) => {
         const row = document.createElement('div');
-        row.className = node.headingLevel === 3 ? 'print-index-subheading2' : node.headingLevel === 2 ? 'print-index-subheading' : 'print-index-heading';
-        row.textContent = node.heading;
+        row.className = entry.node.headingLevel === 3 ? 'print-index-subheading2' : entry.node.headingLevel === 2 ? 'print-index-subheading' : 'print-index-heading';
+        row.textContent = entry.node.heading;
         owrap.appendChild(row);
-      });
+        entry.subheadings.forEach(addRow);
+      };
+      buildOpeningHeadingIndex(opening).forEach(addRow);
       idxPage.appendChild(owrap);
     });
     root.appendChild(idxPage);

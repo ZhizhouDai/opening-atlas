@@ -672,9 +672,14 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   }
   .print-notation .continuation-stub .continuation-stub { display: block; width: auto; margin: 0.5mm 0 0.5mm 2.5mm; }
 
-  .print-boards { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-content: start; }
-  .print-board-block { text-align: center; }
-  #printRoot .print-board-label { font-size: 8pt; margin: 0 0 1mm; color: #333; }
+  /* Three columns (not two) so a full set of boards — heading, subheading,
+     subheading 2, selected move, up to three endings — fits in at most
+     three rows on one A5 page instead of spilling onto a second page.
+     break-inside: avoid on each board keeps a single diagram from ever
+     being cut in half across a page boundary even in an edge case. */
+  .print-boards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; align-content: start; }
+  .print-board-block { text-align: center; break-inside: avoid; }
+  #printRoot .print-board-label { font-size: 7.5pt; margin: 0 0 0.8mm; color: #333; }
   .print-board-block .board { max-width: 100%; border: 0.3mm solid #999; }
   .print-board-block .coord { display: none; }
 }

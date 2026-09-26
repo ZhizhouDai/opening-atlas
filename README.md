@@ -100,16 +100,20 @@ toolbar:
   board's position) saves automatically.
 - **Export to PDF**: check specific headings in the index and "Export
   selected", or "Export all" for the whole repertoire in the order it
-  appears in the index. "Export all" exports only the most specific heading
+  appears in the index. "Export all" prints only the most specific heading
   along each line — a heading with a subheading (or a subheading with its
   own subheading 2) is skipped in favor of that more specific one, since
   its page already covers everything the less specific one would show;
-  "Export selected" exports exactly what's checked, regardless of nesting.
-  Opens the browser's print dialog (choose "Save as PDF") with a two-column
-  table of contents page, then each line as a two-page spread — A5
-  portrait, "Book Antiqua" — a "left" page with the heading and opening
+  "Export selected" prints exactly what's checked, regardless of nesting.
+  The table of contents page always lists an involved opening's complete
+  outline — every heading, subheading, and subheading 2 — even ones that
+  don't get their own page, so it always matches what you'd see in the
+  index panel. Opens the browser's print dialog (choose "Save as PDF") with
+  a two-column table of contents page, then each line as a two-page spread
+  — A5 portrait, "Book Antiqua" — a "left" page with the heading and opening
   name followed by the full notation tree and comments, then a "right" page
-  with that line's own heading and its reference boards in a grid; printed
+  with that line's own heading and its reference boards (up to three per
+  row) in a grid; printed
   double-sided, the two land on facing pages.
 - **Export the full tree**: each opening in the index has its own "Full
   tree (A4)" button — a separate, standalone export of that opening's
