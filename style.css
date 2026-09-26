@@ -315,7 +315,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 /* ---------- move tree ---------- */
 
 .tree-scroll { max-height: 70vh; overflow-y: auto; padding-right: 8px; }
-.move-line { line-height: 1.65; }
+.move-line { line-height: 1.2; }
 .continuation {
   margin: 4px 0 4px 24px;
   padding-left: 14px;
@@ -558,8 +558,9 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-slot-breadcrumb .crumb-sep { color: var(--ink-faint); margin: 0 5px; font-weight: 400; }
 .booklet-slot-body { display: flex; flex-direction: column; gap: 14px; }
 .booklet-notation {
-  max-height: 280px;
-  min-height: 90px;
+  height: 280px;
+  min-height: 120px;
+  max-height: 80vh;
   resize: vertical;
   overflow-y: auto;
 }
@@ -594,18 +595,35 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   .print-index-opening-name { font-weight: 700; font-size: 12pt; margin-bottom: 1mm; }
   .print-index-heading { margin-left: 5mm; font-size: 10.5pt; }
   .print-index-subheading { margin-left: 10mm; font-size: 10pt; font-style: italic; }
-  .print-page { break-after: page; font-size: 10.5pt; line-height: 1.4; }
+  .print-page { break-after: page; font-size: 9pt; line-height: 1.15; }
   .print-page:last-child { break-after: auto; }
-  .print-heading-title { font-size: 13.5pt; font-weight: 700; margin: 0 0 1mm; }
-  .print-subheading-title { font-size: 11pt; font-style: italic; font-weight: 600; margin: 0 0 2mm; }
-  .print-breadcrumb { font-size: 8.5pt; color: #555; margin-bottom: 5mm; }
-  .print-body { display: flex; gap: 6mm; align-items: flex-start; }
-  .print-notation { flex: 1.15; min-width: 0; }
-  .print-notation .move-line { line-height: 1.55; }
-  .print-notation .tree-comment { font-size: 9pt; }
-  .print-boards { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4mm; }
+
+  /* Each line becomes a two-page spread: a "left" page with the heading and
+     opening name followed by the complete notation tree, then a "right"
+     page — starting fresh — with just that line's own heading and its
+     reference boards laid out in a grid. Printed double-sided, these fall
+     on facing pages like an actual reference booklet. */
+  #printRoot .print-page-title {
+    font-size: 10pt;
+    font-weight: 700;
+    margin: 0 0 2mm;
+    color: var(--heading);
+  }
+  .print-page-boards .print-page-title { text-align: right; }
+  #printRoot .print-breadcrumb { font-size: 8pt; color: #555; margin-bottom: 4mm; }
+
+  .print-notation .move-line { line-height: 1.15; }
+  #printRoot .print-notation .tree-comment { font-size: 8.5pt; color: #444; }
+  #printRoot .print-notation .tree-heading { font-size: 10pt; color: var(--heading); margin: 2mm 0 0.5mm; }
+  .print-notation .continuation {
+    margin: 1mm 0 1mm 3mm;
+    padding-left: 1.5mm;
+    border-left-width: 1px;
+  }
+
+  .print-boards { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-content: start; }
   .print-board-block { text-align: center; }
-  .print-board-label { font-size: 8pt; margin: 0 0 1mm; color: #333; }
+  #printRoot .print-board-label { font-size: 8pt; margin: 0 0 1mm; color: #333; }
   .print-board-block .board { max-width: 100%; border: 0.3mm solid #999; }
   .print-board-block .coord { display: none; }
 }

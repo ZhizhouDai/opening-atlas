@@ -98,9 +98,11 @@ toolbar:
 - **Export to PDF**: check specific headings in the index and "Export
   selected", or "Export all" for the whole repertoire in the order it
   appears in the index. Opens the browser's print dialog (choose "Save as
-  PDF") with a table of contents page followed by one page per line — A5
-  portrait, "Book Antiqua", heading/subheading top-left, notation and
-  comments on the left, reference boards on the right.
+  PDF") with a table of contents page, then each line as a two-page spread
+  — A5 portrait, "Book Antiqua" — a "left" page with the heading and opening
+  name followed by the full notation tree and comments, then a "right" page
+  with that line's own heading and its reference boards in a grid; printed
+  double-sided, the two land on facing pages.
 
 ## Design
 

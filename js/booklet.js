@@ -498,13 +498,15 @@ const Booklet = {
     });
     root.appendChild(idxPage);
 
-    targets.forEach(({ opening, node }) => root.appendChild(this.buildPrintPage(opening, node)));
+    targets.forEach(({ opening, node }) => this.buildPrintPage(opening, node).forEach((p) => root.appendChild(p)));
   },
 
+  // Each line prints as a two-page spread, like an open book: a "left" page
+  // with the heading and opening name followed by the complete notation
+  // tree (never truncated — it can run long, this page is text-only), then
+  // a fresh "right" page with just this line's own heading and its
+  // reference boards in a grid.
   buildPrintPage(opening, node) {
-    const page = document.createElement('div');
-    page.className = 'print-page';
-
     const isSub = node.headingLevel === 2;
     let parentHeadingText = '';
     if (isSub) {
@@ -513,27 +515,29 @@ const Booklet = {
       for (let i = 0; i < path.length - 1; i++) { cur = cur.children[path[i]]; if (cur.heading && cur.headingLevel === 1) h = cur; }
       parentHeadingText = h ? h.heading : '';
     }
-    if (isSub && parentHeadingText) {
-      const h1 = document.createElement('div'); h1.className = 'print-heading-title'; h1.textContent = parentHeadingText;
-      page.appendChild(h1);
-      const h2 = document.createElement('div'); h2.className = 'print-subheading-title'; h2.textContent = node.heading;
-      page.appendChild(h2);
-    } else {
-      const h1 = document.createElement('div'); h1.className = 'print-heading-title'; h1.textContent = node.heading;
-      page.appendChild(h1);
-    }
+    const topHeadingText = (isSub && parentHeadingText) ? parentHeadingText : node.heading;
+
+    const notationPage = document.createElement('div');
+    notationPage.className = 'print-page print-page-notation';
+    const title1 = document.createElement('div');
+    title1.className = 'print-page-title';
+    title1.textContent = topHeadingText;
+    notationPage.appendChild(title1);
     const bc = document.createElement('div');
     bc.className = 'print-breadcrumb';
     bc.textContent = (opening.color === 'white' ? 'White' : 'Black') + ' · ' + opening.name;
-    page.appendChild(bc);
-
-    const body = document.createElement('div');
-    body.className = 'print-body';
+    notationPage.appendChild(bc);
     const notationCol = document.createElement('div');
     notationCol.className = 'print-notation';
     renderBookletTree(notationCol, opening, node.id, {});
-    body.appendChild(notationCol);
+    notationPage.appendChild(notationCol);
 
+    const boardsPage = document.createElement('div');
+    boardsPage.className = 'print-page print-page-boards';
+    const title2 = document.createElement('div');
+    title2.className = 'print-page-title';
+    title2.textContent = node.heading;
+    boardsPage.appendChild(title2);
     const boardsCol = document.createElement('div');
     boardsCol.className = 'print-boards';
     this.boardsForPrint(opening, node).forEach((def) => {
@@ -553,9 +557,9 @@ const Booklet = {
       board.setLastMove(posNode.uci ? posNode.uci.slice(0, 2) : null, posNode.uci ? posNode.uci.slice(2, 4) : null);
       boardsCol.appendChild(block);
     });
-    body.appendChild(boardsCol);
-    page.appendChild(body);
-    return page;
+    boardsPage.appendChild(boardsCol);
+
+    return [notationPage, boardsPage];
   },
 
   // Uses a live booklet slot's own (possibly user-adjusted) boards when this
