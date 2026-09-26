@@ -97,6 +97,17 @@ const Repertoire = {
     this.setColor('white');
   },
 
+  // Re-reads the openings list from IndexedDB (picking up anything edited
+  // from the Study or Booklet page — comments, marks, headings, moves) and
+  // re-renders the currently open one, if it still exists, so switching to
+  // this page always shows the latest saved state.
+  async refreshOpenings() {
+    this.openings = await DB.openings.getAll();
+    const keepId = this.opening ? this.opening.id : null;
+    this.populateSelect({ preserveId: keepId });
+    if (this.opening) this.renderAll();
+  },
+
   populateSelect(opts = {}) {
     const list = this.openings.filter((o) => o.color === this.color).sort((a, b) => a.name.localeCompare(b.name));
     this.els.select.innerHTML = '<option value="">Choose an opening…</option>' + list.map((o) => {
@@ -183,14 +194,19 @@ const Repertoire = {
     this.highlightCursor();
   },
 
-  // Heading/bold/boxed/order live on the node itself (see chesstree.js), so
-  // editing them here shows up immediately on the Study & Analysis page too.
+  // Heading/bold/boxed/comments/mark/order all live on the node itself (see
+  // chesstree.js), so editing them here shows up immediately on the Study &
+  // Analysis and Booklet pages too.
   async openPlyStyleEditor(nodeId) {
     const node = findNode(this.opening.tree, nodeId);
     const parent = findParent(this.opening.tree, nodeId);
     const idx = parent ? parent.children.indexOf(node) : -1;
-    const existing = (node.heading || node.bold || node.boxed)
-      ? { heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed }
+    const existing = (node.heading || node.bold || node.boxed || node.commentBefore || node.commentAfter || node.markColor || node.markGlyph)
+      ? {
+        heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed,
+        commentBefore: node.commentBefore, commentAfter: node.commentAfter,
+        markColor: node.markColor, markGlyph: node.markGlyph,
+      }
       : null;
     const result = await modalPlyStyleEditor(existing, {
       canMoveUp: idx > 0,
@@ -204,6 +220,7 @@ const Repertoire = {
     }
     await this.persist();
     this.renderTreePane();
+    if (this.cursorId === nodeId) this.selectNode(this.cursorId);
   },
 
   highlightCursor() {

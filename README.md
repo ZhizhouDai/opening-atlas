@@ -90,9 +90,13 @@ toolbar:
   off along the way — at any depth — appears inline in the same tree as a
   compressed stub (just its heading/subheading, no move) laid out up to
   three to a row to save space; clicking a stub switches the whole booklet
-  to that line, quick in-place switching without leaving the tree. The
-  notation panel has a drag handle
-  to resize it to fit a whole line without scrolling. A handful of boards
+  to that line, quick in-place switching without leaving the tree. Right-
+  click any move — real or stub — to add comments, a heading, bold/box
+  emphasis, or a color+icon mark, exactly like on the Create Repertoire and
+  Study pages; it's the same move record, so the change is saved to the
+  opening immediately and shows up everywhere else too. The notation panel
+  has a drag handle to resize it to fit a whole line without scrolling. A
+  handful of boards
   auto-populate at the heading position, the subheading position, the
   subheading 2 position, the line's own ending(s), and a freely-adjustable
   "selected move" board — add or remove boards, and step any of them with
@@ -115,7 +119,12 @@ toolbar:
   — A5 portrait, "Book Antiqua" — a "left" page with the heading and opening
   name followed by the full notation tree and comments, then a "right" page
   with that line's own heading and its reference boards (up to three per
-  row) in a grid; printed double-sided, the two land on facing pages.
+  row) in a grid; printed double-sided, the two land on facing pages. The
+  notation page is a hard one-page fit: it's measured against the actual
+  print layout, and if the full ancestor path and continuation plus every
+  "other line" stub wouldn't fit on one A5 sheet, stubs are dropped one at a
+  time (the most specific/deepest ones first) until it does — the real
+  continuation itself is never touched or truncated.
 - **Export the full tree**: each opening in the index has its own "Full
   tree (A4)" button — a separate, standalone export of that opening's
   complete move tree (every branch and heading, no diagrams) as a dense

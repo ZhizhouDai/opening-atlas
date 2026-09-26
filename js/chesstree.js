@@ -43,18 +43,24 @@ function makeMoveNode(parent, applied, fenBefore, fenAfter) {
   };
 }
 
-// Applies a {heading, level, bold, boxed} result from modalPlyStyleEditor to
-// a node, or resets all four fields to their defaults when `style` is null
-// (the editor's "Clear" action).
+// Applies a {heading, level, bold, boxed, commentBefore, commentAfter,
+// markColor, markGlyph} result from modalPlyStyleEditor to a node, or
+// resets all of it to defaults when `style` is null (the editor's "Clear"
+// action).
 function applyPlyStyle(node, style) {
   if (!style) {
     node.heading = ''; node.headingLevel = 1; node.bold = false; node.boxed = false;
+    node.commentBefore = ''; node.commentAfter = ''; node.markColor = null; node.markGlyph = null;
     return;
   }
   node.heading = style.heading || '';
   node.headingLevel = style.level === 3 ? 3 : style.level === 2 ? 2 : 1;
   node.bold = !!style.bold;
   node.boxed = !!style.boxed;
+  node.commentBefore = style.commentBefore || '';
+  node.commentAfter = style.commentAfter || '';
+  node.markColor = style.markColor || null;
+  node.markGlyph = style.markGlyph || '';
 }
 
 function findNode(root, id) {

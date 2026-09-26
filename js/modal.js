@@ -37,13 +37,17 @@ function modalPrompt(message, defaultValue) {
   });
 }
 
-// Edits a single move's styling: an optional heading/subheading label, plus
-// independent bold and boxed emphasis toggles, plus (when the move has
-// siblings — other continuations at the same branch point) reordering it
-// earlier or later among them. Resolves to {heading, level, bold, boxed} to
-// save, {reorder: -1 | 1} to move the ply up/down among its siblings
-// (applied immediately, closing the dialog), null to clear everything, or
-// undefined if cancelled.
+// Edits everything about a single move: comments before/after, a
+// heading/subheading label, bold/boxed emphasis, a color+icon mark, plus
+// (when the move has siblings — other continuations at the same branch
+// point) reordering it earlier or later among them. The same editor is used
+// from Create Repertoire, Study & Analysis, and Booklet mode, so a change
+// made from any one of them shows up on the others immediately — all of it
+// lives on the move node itself and is saved as part of the opening.
+// Resolves to {heading, level, bold, boxed, commentBefore, commentAfter,
+// markColor, markGlyph} to save, {reorder: -1 | 1} to move the ply up/down
+// among its siblings (applied immediately, closing the dialog), null to
+// clear everything, or undefined if cancelled.
 //
 // opts: { canMoveUp, canMoveDown } — whether a sibling exists in that
 // direction; the "Order" section is omitted entirely when neither applies.
@@ -53,7 +57,12 @@ function modalPlyStyleEditor(existing, opts = {}) {
     const showOrder = opts.canMoveUp || opts.canMoveDown;
     box.innerHTML = `
       <p class="modal-message">Label or style this move</p>
-      <input type="text" class="modal-input" placeholder="Heading text, e.g. &quot;Schmidt Variation&quot;" />
+      <p class="modal-section-label">Comment before this move</p>
+      <textarea class="modal-input" data-field="commentBefore" rows="2" placeholder="e.g. Preparing …"></textarea>
+      <p class="modal-section-label">Comment after this move</p>
+      <textarea class="modal-input" data-field="commentAfter" rows="2" placeholder="e.g. Better is … here."></textarea>
+      <p class="modal-section-label">Heading</p>
+      <input type="text" class="modal-input" data-field="heading" placeholder="Heading text, e.g. &quot;Schmidt Variation&quot;" />
       <div class="modal-btn-row">
         <button type="button" class="btn btn-ghost level-btn" data-level="1">Heading</button>
         <button type="button" class="btn btn-ghost level-btn" data-level="2">Subheading</button>
@@ -63,6 +72,15 @@ function modalPlyStyleEditor(existing, opts = {}) {
       <div class="modal-btn-row">
         <button type="button" class="btn btn-ghost level-btn" data-style="bold"><b>Bold</b></button>
         <button type="button" class="btn btn-ghost level-btn" data-style="boxed">Box</button>
+      </div>
+      <p class="modal-section-label">Mark</p>
+      <div class="mark-row">
+        <span class="mark-row-label">Color</span>
+        <div class="swatch-row" data-mark-colors></div>
+      </div>
+      <div class="mark-row">
+        <span class="mark-row-label">Icon</span>
+        <div class="glyph-row" data-mark-glyphs></div>
       </div>
       ${showOrder ? `
       <p class="modal-section-label">Order among continuations</p>
@@ -76,11 +94,17 @@ function modalPlyStyleEditor(existing, opts = {}) {
         <button type="button" class="btn btn-primary" data-act="ok">Save</button>
       </div>
     `;
-    const input = box.querySelector('.modal-input');
-    input.value = existing ? existing.heading || '' : '';
+    const headingInput = box.querySelector('[data-field="heading"]');
+    const commentBeforeInput = box.querySelector('[data-field="commentBefore"]');
+    const commentAfterInput = box.querySelector('[data-field="commentAfter"]');
+    headingInput.value = existing ? existing.heading || '' : '';
+    commentBeforeInput.value = existing ? existing.commentBefore || '' : '';
+    commentAfterInput.value = existing ? existing.commentAfter || '' : '';
     let level = existing && existing.level === 3 ? 3 : existing && existing.level === 2 ? 2 : 1;
     let bold = !!(existing && existing.bold);
     let boxed = !!(existing && existing.boxed);
+    let markColor = (existing && existing.markColor) || 'none';
+    let markGlyph = (existing && existing.markGlyph) || '';
 
     const levelBtns = [...box.querySelectorAll('[data-level]')];
     const syncLevel = () => levelBtns.forEach((b) => b.classList.toggle('active', Number(b.dataset.level) === level));
@@ -94,6 +118,28 @@ function modalPlyStyleEditor(existing, opts = {}) {
     boldBtn.addEventListener('click', () => { bold = !bold; syncStyle(); });
     boxedBtn.addEventListener('click', () => { boxed = !boxed; syncStyle(); });
 
+    const colorsEl = box.querySelector('[data-mark-colors]');
+    colorsEl.innerHTML = MARK_COLORS.map((c) => `<button type="button" data-color="${c}" class="swatch swatch-${c}" title="${c}"></button>`).join('');
+    const syncColor = () => [...colorsEl.children].forEach((b) => b.classList.toggle('active', b.dataset.color === markColor));
+    syncColor();
+    colorsEl.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-color]');
+      if (!b) return;
+      markColor = b.dataset.color;
+      syncColor();
+    });
+
+    const glyphsEl = box.querySelector('[data-mark-glyphs]');
+    glyphsEl.innerHTML = MARK_GLYPHS.map((g) => `<button type="button" data-glyph="${g}" class="glyph-btn">${g || '—'}</button>`).join('');
+    const syncGlyph = () => [...glyphsEl.children].forEach((b) => b.classList.toggle('active', b.dataset.glyph === markGlyph));
+    syncGlyph();
+    glyphsEl.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-glyph]');
+      if (!b) return;
+      markGlyph = b.dataset.glyph;
+      syncGlyph();
+    });
+
     const close = (result) => { overlay.remove(); resolve(result); };
     box.querySelector('[data-act="cancel"]').addEventListener('click', () => close(undefined));
     const removeBtn = box.querySelector('[data-act="remove"]');
@@ -103,16 +149,25 @@ function modalPlyStyleEditor(existing, opts = {}) {
     if (moveUpBtn) moveUpBtn.addEventListener('click', () => close({ reorder: -1 }));
     if (moveDownBtn) moveDownBtn.addEventListener('click', () => close({ reorder: 1 }));
     const save = () => {
-      const heading = input.value.trim();
-      close((heading || bold || boxed) ? { heading, level, bold, boxed } : null);
+      const heading = headingInput.value.trim();
+      const commentBefore = commentBeforeInput.value.trim();
+      const commentAfter = commentAfterInput.value.trim();
+      const result = {
+        heading, level, bold, boxed, commentBefore, commentAfter,
+        markColor: markColor === 'none' ? null : markColor,
+        markGlyph,
+      };
+      const isEmpty = !heading && !bold && !boxed && !commentBefore && !commentAfter && !result.markColor && !markGlyph;
+      close(isEmpty ? null : result);
     };
     box.querySelector('[data-act="ok"]').addEventListener('click', save);
-    input.addEventListener('keydown', (e) => {
+    headingInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') save();
       if (e.key === 'Escape') close(undefined);
     });
+    box.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(undefined); });
     overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(undefined); });
-    requestAnimationFrame(() => { input.focus(); input.select(); });
+    requestAnimationFrame(() => { commentBeforeInput.focus(); });
   });
 }
 

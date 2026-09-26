@@ -306,6 +306,10 @@ function renderBranchOutline(container, rootNode, opts = {}) {
 //   onSelectStub(nodeId)   — click another line's heading stub
 //   onPlyContext(nodeId)   — right-click any move (real or stub) to edit it
 //   collapsedComments, onToggleComment — same as renderTree
+//   excludeStubIds: Set<nodeId> — other-line branches to drop entirely (and
+//     not search inside for a nested heading either) — used by the PDF
+//     export to shrink a page that doesn't fit without touching the real
+//     continuation, which is never eligible for exclusion here
 function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
   const root = opening.tree;
   const onSelectFull = opts.onSelectFull;
@@ -313,6 +317,7 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
   const onPlyContext = opts.onPlyContext;
   const collapsedComments = opts.collapsedComments;
   const onToggleComment = opts.onToggleComment;
+  const excludeStubIds = opts.excludeStubIds || new Set();
   const nodeEls = new Map();
   const commentKeys = [];
   container.innerHTML = '';
@@ -377,6 +382,7 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
     h.textContent = node.heading;
     if (stub) {
       h.classList.add('tree-heading-stub');
+      h.dataset.nodeId = node.id;
       if (onSelectStub) h.addEventListener('click', () => onSelectStub(node.id));
       if (onPlyContext) h.addEventListener('contextmenu', (e) => { e.preventDefault(); onPlyContext(node.id); });
     }
@@ -423,10 +429,13 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
 
   // Nearest heading-carrying descendants of `node` (not including `node`
   // itself) — each one is a separate "other line" stub; if a stub itself
-  // has further nested headings, walkStub finds those in turn.
+  // has further nested headings, walkStub finds those in turn. A branch
+  // whose id is in excludeStubIds is dropped entirely, including anything
+  // nested inside it, rather than searched past.
   function stubRootsFrom(node) {
     const out = [];
     node.children.forEach((c) => {
+      if (excludeStubIds.has(c.id)) return;
       if (c.heading) out.push(c);
       else out.push(...stubRootsFrom(c));
     });
@@ -441,6 +450,7 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
     const result = [];
     node.children.forEach((c) => {
       if (pathIds.has(c.id)) result.push({ node: c, full: true });
+      else if (excludeStubIds.has(c.id)) return;
       else if (c.heading) result.push({ node: c, full: false });
       else stubRootsFrom(c).forEach((s) => result.push({ node: s, full: false }));
     });

@@ -39,6 +39,7 @@ async function setView(view) {
   }
   if (leavingStudy && typeof Booklet !== 'undefined' && Booklet.active) Booklet.exit();
   if (view === 'study' && typeof Study !== 'undefined') await Study.refreshOpenings();
+  if (view === 'repertoire' && typeof Repertoire !== 'undefined') await Repertoire.refreshOpenings();
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${view}`));
   document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   const sel = document.getElementById('navSelect');

@@ -199,13 +199,16 @@ const Study = {
     this.setColor('white');
   },
 
-  // Re-reads the openings list from IndexedDB (picking up anything created
-  // or renamed on the Create Repertoire page) without losing the opening
-  // currently being studied, if it still exists.
+  // Re-reads the openings list from IndexedDB (picking up anything created,
+  // renamed, or edited — comments, marks, headings, moves — on the Create
+  // Repertoire or Booklet page) without losing the opening currently being
+  // studied, if it still exists, and re-renders its notation so switching
+  // to this page always shows the latest saved state.
   async refreshOpenings() {
     this.openings = await DB.openings.getAll();
     const keepId = this.opening ? this.opening.id : null;
     this.populateSelect({ preserveId: keepId });
+    if (this.opening) this.renderTreePane();
   },
 
   populateSelect(opts = {}) {
@@ -278,16 +281,20 @@ const Study = {
     this.updateCollapseButtonLabel();
   },
 
-  // Heading/bold/boxed/order live on the node itself (see chesstree.js), so
-  // this saves straight to the opening record — not gated behind the study
-  // page's own Save button — and is immediately visible on the Create
-  // Repertoire page too.
+  // Heading/bold/boxed/comments/mark/order all live on the node itself (see
+  // chesstree.js), so this saves straight to the opening record — not gated
+  // behind the study page's own Save button — and is immediately visible on
+  // the Create Repertoire and Booklet pages too.
   async openPlyStyleEditor(nodeId) {
     const node = findNode(this.opening.tree, nodeId);
     const parent = findParent(this.opening.tree, nodeId);
     const idx = parent ? parent.children.indexOf(node) : -1;
-    const existing = (node.heading || node.bold || node.boxed)
-      ? { heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed }
+    const existing = (node.heading || node.bold || node.boxed || node.commentBefore || node.commentAfter || node.markColor || node.markGlyph)
+      ? {
+        heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed,
+        commentBefore: node.commentBefore, commentAfter: node.commentAfter,
+        markColor: node.markColor, markGlyph: node.markGlyph,
+      }
       : null;
     const result = await modalPlyStyleEditor(existing, {
       canMoveUp: idx > 0,

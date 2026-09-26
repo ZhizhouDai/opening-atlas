@@ -5,6 +5,11 @@
 // — can be read and compared side by side. State auto-saves to DB.settings
 // (no explicit Save button, unlike the rest of the Study page).
 
+// A5 portrait (148 x 210mm) at the exported page's 6mm margin.
+const PRINT_PAGE_CONTENT_WIDTH_MM = 136;
+const PRINT_PAGE_CONTENT_HEIGHT_MM = 198;
+const PRINT_MM_TO_PX = 96 / 25.4;
+
 const Booklet = {
   active: false,
   openings: [],
@@ -65,13 +70,16 @@ const Booklet = {
     this.setActiveSlot(this.activeSlot);
   },
 
-  exit() {
+  async exit() {
     this.active = false;
     this.els.workspace.hidden = true;
     this.els.btnToggle.hidden = false;
     this.els.saveStatus.hidden = false;
     this.els.btnSaveStudy.hidden = false;
-    if (typeof Study !== 'undefined') Study.showEmptyState();
+    // Refresh (not just show) — anything edited while in booklet mode
+    // (comments, marks, headings) needs to reach Study's own view too,
+    // since it keeps its own separate in-memory copy of the opening.
+    if (typeof Study !== 'undefined') await Study.refreshOpenings();
   },
 
   setActiveSlot(n) {
@@ -390,8 +398,12 @@ const Booklet = {
     const node = findNode(opening.tree, nodeId);
     const parent = findParent(opening.tree, nodeId);
     const idx = parent ? parent.children.indexOf(node) : -1;
-    const existing = (node.heading || node.bold || node.boxed)
-      ? { heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed }
+    const existing = (node.heading || node.bold || node.boxed || node.commentBefore || node.commentAfter || node.markColor || node.markGlyph)
+      ? {
+        heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed,
+        commentBefore: node.commentBefore, commentAfter: node.commentAfter,
+        markColor: node.markColor, markGlyph: node.markGlyph,
+      }
       : null;
     const result = await modalPlyStyleEditor(existing, {
       canMoveUp: idx > 0,
@@ -553,8 +565,8 @@ const Booklet = {
     notationPage.appendChild(bc);
     const notationCol = document.createElement('div');
     notationCol.className = 'print-notation';
-    renderBookletTree(notationCol, opening, node.id, {});
     notationPage.appendChild(notationCol);
+    this.fitNotationToOnePage(notationPage, notationCol, opening, node);
 
     const boardsPage = document.createElement('div');
     boardsPage.className = 'print-page print-page-boards';
@@ -584,6 +596,65 @@ const Booklet = {
     boardsPage.appendChild(boardsCol);
 
     return [notationPage, boardsPage];
+  },
+
+  // Hard rule: the notation page must fit on one A5 sheet. Renders the full
+  // ancestor path and the selected line's own subtree — which are never
+  // eligible for removal — plus every "other line" stub, measures the
+  // actual rendered height under the real print styles, and if it overflows
+  // drops one stub at a time (the deepest/most-specific one first, since
+  // stubs earlier on the path represent bigger, more useful opening
+  // choices) until it fits or there are no more stubs left to drop.
+  fitNotationToOnePage(pageEl, notationCol, opening, node) {
+    const excludeStubIds = new Set();
+    for (;;) {
+      renderBookletTree(notationCol, opening, node.id, { excludeStubIds });
+      if (this.measurePrintPageHeightMm(pageEl) <= PRINT_PAGE_CONTENT_HEIGHT_MM) return;
+      const stubEls = [...notationCol.querySelectorAll('.tree-heading-stub')];
+      if (!stubEls.length) return; // nothing left to drop — the real continuation itself doesn't fit
+      excludeStubIds.add(stubEls[stubEls.length - 1].dataset.nodeId);
+    }
+  },
+
+  // Measures `el`'s rendered height in mm as it will actually appear when
+  // printed, by temporarily applying the real @media print rules outside
+  // of an actual print job. The visibility-toggling rule that hides
+  // everything except #printRoot is dropped (irrelevant here, and would
+  // otherwise hide this offscreen measurement element too), and #printRoot
+  // is renamed to a throwaway id so this never touches the real one.
+  measurePrintPageHeightMm(el) {
+    let printCss = '';
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { continue; }
+      for (const rule of rules) {
+        if (rule.type === CSSRule.MEDIA_RULE && rule.media.mediaText.includes('print')) {
+          printCss = [...rule.cssRules]
+            .filter((r) => !(r.selectorText && r.selectorText.includes('body >')))
+            .map((r) => r.cssText).join('\n');
+        }
+      }
+    }
+    printCss = printCss.replace(/#printRoot/g, '#__measureRoot');
+
+    const style = document.createElement('style');
+    style.textContent = printCss;
+    document.head.appendChild(style);
+    const measureRoot = document.createElement('div');
+    measureRoot.id = '__measureRoot';
+    measureRoot.style.cssText = 'position:fixed; left:-9999px; top:0;';
+    measureRoot.appendChild(el);
+    document.body.appendChild(measureRoot);
+    el.style.width = (PRINT_PAGE_CONTENT_WIDTH_MM * PRINT_MM_TO_PX) + 'px';
+    el.style.boxSizing = 'border-box';
+
+    const heightMm = el.getBoundingClientRect().height / PRINT_MM_TO_PX;
+
+    document.body.removeChild(measureRoot);
+    document.head.removeChild(style);
+    el.style.width = '';
+    el.style.boxSizing = '';
+    return heightMm;
   },
 
   // Uses a live booklet slot's own (possibly user-adjusted) boards when this
