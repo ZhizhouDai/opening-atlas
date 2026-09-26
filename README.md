@@ -83,12 +83,18 @@ toolbar:
   it into whichever booklet is active (click a booklet to make it active);
   the two can show lines from completely different repertoires, for
   side-by-side comparison. Each booklet shows the full notation (with
-  comments) for just that line, links to the opening's other headings for
-  quick in-place switching, and a handful of boards auto-populated at the
-  heading position, the subheading position, the line's own ending(s), and
-  a freely-adjustable "selected move" board — add or remove boards, and
-  step any of them with ◀ / ▶ independently. All of it (which line each
-  booklet shows, every board's position) saves automatically.
+  comments) for that line, starting from the opening's true root so the
+  moves leading up to it are never cut off. Any other headed line branching
+  off along the way — at any depth — appears inline in the same tree as a
+  compressed stub (just its heading/subheading and its own single move);
+  clicking a stub switches the whole booklet to that line, quick in-place
+  switching without leaving the tree. The notation panel has a drag handle
+  to resize it to fit a whole line without scrolling. A handful of boards
+  auto-populate at the heading position, the subheading position, the
+  line's own ending(s), and a freely-adjustable "selected move" board — add
+  or remove boards, and step any of them with ◀ / ▶ independently. All of
+  it (which line each booklet shows, every board's position) saves
+  automatically.
 - **Export to PDF**: check specific headings in the index and "Export
   selected", or "Export all" for the whole repertoire in the order it
   appears in the index. Opens the browser's print dialog (choose "Save as

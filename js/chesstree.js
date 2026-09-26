@@ -233,20 +233,6 @@ function buildOpeningHeadingIndex(opening) {
   return entries;
 }
 
-// A synthetic wrapper node so renderTree() can render just the subtree
-// starting at `node` (including node's own move and heading) without
-// pulling in its siblings — used by Booklet mode to isolate one named line.
-function wrapAsRoot(node) {
-  return {
-    id: 'synthetic-root:' + node.id, ply: node.ply - 1, san: null, uci: null,
-    fenBefore: null, fenAfter: node.fenBefore,
-    commentBefore: '', commentAfter: '',
-    markColor: null, markGlyph: null,
-    heading: '', headingLevel: 1, bold: false, boxed: false,
-    children: [node],
-  };
-}
-
 // Total node count, for quick stats display.
 function countNodes(node) {
   let n = 1;

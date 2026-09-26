@@ -238,31 +238,12 @@ const Booklet = {
     if (parentHeadingText) { addCrumb(parentHeadingText); sep(); }
     addCrumb(node.heading);
 
-    // other headings in the same opening
-    const othersEl = document.getElementById(`bookletOthers${n}`);
-    othersEl.innerHTML = '';
-    const entries = buildOpeningHeadingIndex(opening);
-    const flat = [];
-    entries.forEach((e) => { flat.push(e.node); e.subheadings.forEach((s) => flat.push(s.node)); });
-    const others = flat.filter((h) => h.id !== node.id);
-    if (others.length) {
-      const label = document.createElement('span');
-      label.textContent = 'Other lines here: ';
-      label.className = 'muted';
-      othersEl.appendChild(label);
-      others.forEach((h) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.textContent = h.heading;
-        b.addEventListener('click', () => this.loadSlot(n, opening.id, h.id));
-        othersEl.appendChild(b);
-      });
-    }
-
-    // notation — a synthetic root isolates just this line's subtree
+    // notation — the full path from the opening's root through this line,
+    // with any other headed line branching off shown as a compressed stub
     const treeEl = document.getElementById(`bookletTree${n}`);
-    renderTree(treeEl, wrapAsRoot(node), {
-      onSelect: (id) => this.jumpBoard(n, id),
+    renderBookletTree(treeEl, opening, node.id, {
+      onSelectFull: (id) => this.jumpBoard(n, id),
+      onSelectStub: (id) => this.loadSlot(n, opening.id, id),
       onPlyContext: (id) => this.openPlyStyleEditor(n, id),
     });
 
@@ -550,7 +531,7 @@ const Booklet = {
     body.className = 'print-body';
     const notationCol = document.createElement('div');
     notationCol.className = 'print-notation';
-    renderTree(notationCol, wrapAsRoot(node), {});
+    renderBookletTree(notationCol, opening, node.id, {});
     body.appendChild(notationCol);
 
     const boardsCol = document.createElement('div');

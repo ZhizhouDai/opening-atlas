@@ -286,3 +286,191 @@ function renderBranchOutline(container, rootNode, opts = {}) {
     kids.forEach((entry) => startNewLine(lineEl, entry));
   }
 }
+
+// A single-continuation view for Booklet mode: renders the full path from
+// the opening's true root down through `selectedNode` and its entire
+// subtree (comments included, exactly like renderTree), so a booklet page
+// never starts "cold" mid-line. Any other headed line that branches off
+// that path — at any depth, including nested subheadings — appears inline
+// in the same tree as a compressed "stub": just its heading/subheading
+// label and its own single move, no further moves, no comments. Clicking a
+// stub is expected to switch the booklet to that other line entirely
+// (opts.onSelectStub), while clicking anything on the real path just moves
+// a board there (opts.onSelectFull) — same split the old separate "other
+// headings" list used to provide, now shown at the point where it actually
+// branches instead of in a list disconnected from the tree.
+//
+// opts:
+//   onSelectFull(nodeId)   — click a move on the real path/continuation
+//   onSelectStub(nodeId)   — click another line's heading stub
+//   onPlyContext(nodeId)   — right-click any move (real or stub) to edit it
+//   collapsedComments, onToggleComment — same as renderTree
+function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
+  const root = opening.tree;
+  const onSelectFull = opts.onSelectFull;
+  const onSelectStub = opts.onSelectStub;
+  const onPlyContext = opts.onPlyContext;
+  const collapsedComments = opts.collapsedComments;
+  const onToggleComment = opts.onToggleComment;
+  const nodeEls = new Map();
+  const commentKeys = [];
+  container.innerHTML = '';
+
+  const selectedNode = findNode(root, selectedNodeId) || root;
+
+  // Every node id from root down through selectedNode, plus selectedNode's
+  // entire subtree — the "real" continuation, rendered in full.
+  const pathIds = new Set([root.id]);
+  (function markPath(node, id) {
+    if (node.id === id) return true;
+    for (const c of node.children) {
+      if (markPath(c, id)) { pathIds.add(c.id); return true; }
+    }
+    return false;
+  }(root, selectedNode.id));
+  (function markSubtree(node) {
+    pathIds.add(node.id);
+    node.children.forEach(markSubtree);
+  }(selectedNode));
+
+  if (root.commentAfter) appendComment(container, 'root:after', root.commentAfter, true);
+
+  if (!root.children.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted tree-empty';
+    empty.textContent = 'No moves yet.';
+    container.appendChild(empty);
+    return { nodeEls, commentKeys };
+  }
+
+  const rootLine = document.createElement('div');
+  rootLine.className = 'move-line';
+  container.appendChild(rootLine);
+  walkFull(rootLine, root);
+  return { nodeEls, commentKeys };
+
+  function appendComment(parentEl, key, text, isIntro) {
+    commentKeys.push(key);
+    const c = document.createElement(isIntro ? 'div' : 'span');
+    c.className = 'tree-comment' + (isIntro ? ' tree-intro' : '');
+    const collapsed = collapsedComments && collapsedComments.has(key);
+    if (collapsed) {
+      c.classList.add('collapsed');
+      c.textContent = '💬';
+      c.title = text;
+    } else {
+      c.textContent = text;
+    }
+    if (onToggleComment) {
+      c.classList.add('toggleable');
+      c.title = collapsed ? text : 'Click to collapse';
+      c.addEventListener('click', (e) => { e.stopPropagation(); onToggleComment(key); });
+    }
+    parentEl.appendChild(c);
+  }
+
+  function appendHeading(parentEl, node) {
+    if (!node.heading) return;
+    const h = document.createElement('div');
+    h.className = 'tree-heading level-' + (node.headingLevel === 2 ? 2 : 1);
+    h.textContent = node.heading;
+    parentEl.appendChild(h);
+  }
+
+  function appendToken(lineEl, node, forceLabel, stub) {
+    if (!stub && node.commentBefore) appendComment(lineEl, node.id + ':before', node.commentBefore);
+    if (node.ply % 2 === 1) {
+      const num = document.createElement('span');
+      num.className = 'move-num';
+      num.textContent = `${(node.ply + 1) / 2}.`;
+      lineEl.appendChild(num);
+    } else if (forceLabel) {
+      const num = document.createElement('span');
+      num.className = 'move-num';
+      num.textContent = `${node.ply / 2}...`;
+      lineEl.appendChild(num);
+    }
+    const span = document.createElement('span');
+    span.className = 'ply';
+    span.dataset.nodeId = node.id;
+    const sanText = document.createElement('span');
+    sanText.className = 'ply-san';
+    sanText.textContent = node.san + (node.markGlyph || '');
+    span.appendChild(sanText);
+    const dots = document.createElement('span');
+    dots.className = 'ply-dots';
+    span.appendChild(dots);
+    if (node.markColor && node.markColor !== 'none') span.classList.add('mark-' + node.markColor);
+    if (node.markGlyph) span.classList.add('has-glyph');
+    if (node.bold) span.classList.add('ply-bold');
+    if (node.boxed) span.classList.add('ply-boxed');
+    if (stub) span.classList.add('ply-stub');
+    const onSelect = stub ? onSelectStub : onSelectFull;
+    if (onSelect) span.addEventListener('click', () => onSelect(node.id));
+    if (onPlyContext) {
+      span.classList.add('headable');
+      span.addEventListener('contextmenu', (e) => { e.preventDefault(); onPlyContext(node.id); });
+    }
+    lineEl.appendChild(span);
+    nodeEls.set(node.id, span);
+    if (!stub && node.commentAfter) appendComment(lineEl, node.id + ':after', node.commentAfter);
+  }
+
+  // Nearest heading-carrying descendants of `node` (not including `node`
+  // itself) — each one is a separate "other line" stub; if a stub itself
+  // has further nested headings, walkStub finds those in turn.
+  function stubRootsFrom(node) {
+    const out = [];
+    node.children.forEach((c) => {
+      if (c.heading) out.push(c);
+      else out.push(...stubRootsFrom(c));
+    });
+    return out;
+  }
+
+  // The branches to render at `node`: real-path children in full, plus any
+  // other child's nearest heading descendant(s) as stubs. A non-headed,
+  // non-path child with no headings anywhere in its subtree contributes
+  // nothing and is silently skipped.
+  function branchesOf(node) {
+    const result = [];
+    node.children.forEach((c) => {
+      if (pathIds.has(c.id)) result.push({ node: c, full: true });
+      else if (c.heading) result.push({ node: c, full: false });
+      else stubRootsFrom(c).forEach((s) => result.push({ node: s, full: false }));
+    });
+    return result;
+  }
+
+  function startBranch(parentLineEl, node, full) {
+    const wrap = document.createElement('div');
+    wrap.className = 'continuation' + (full ? '' : ' continuation-stub');
+    appendHeading(wrap, node);
+    const line = document.createElement('div');
+    line.className = 'move-line';
+    appendToken(line, node, true, !full);
+    wrap.appendChild(line);
+    if (full) walkFull(line, node);
+    else walkStub(line, node);
+    parentLineEl.appendChild(wrap);
+  }
+
+  function walkFull(lineEl, startNode) {
+    let cur = startNode;
+    for (;;) {
+      const branches = branchesOf(cur);
+      if (!branches.length) return;
+      if (branches.length === 1 && branches[0].full && !branches[0].node.heading) {
+        appendToken(lineEl, branches[0].node, false, false);
+        cur = branches[0].node;
+        continue;
+      }
+      branches.forEach((b) => startBranch(lineEl, b.node, b.full));
+      return;
+    }
+  }
+
+  function walkStub(lineEl, node) {
+    stubRootsFrom(node).forEach((k) => startBranch(lineEl, k, false));
+  }
+}

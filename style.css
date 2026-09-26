@@ -556,24 +556,23 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-slot-breadcrumb { font-size: 13px; font-weight: 600; color: var(--ink); }
 .booklet-slot-breadcrumb .crumb-opening { color: var(--ink-soft); font-weight: 500; }
 .booklet-slot-breadcrumb .crumb-sep { color: var(--ink-faint); margin: 0 5px; font-weight: 400; }
-.booklet-other-headings { margin-bottom: 10px; line-height: 1.7; }
-.booklet-other-headings button {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0 10px 0 0;
-  color: var(--heading-soft);
-  cursor: pointer;
-  font-size: 12px;
-  text-decoration: underline;
-  font-family: inherit;
-}
 .booklet-slot-body { display: flex; flex-direction: column; gap: 14px; }
-.booklet-notation { max-height: 280px; }
+.booklet-notation {
+  max-height: 280px;
+  min-height: 90px;
+  resize: vertical;
+  overflow-y: auto;
+}
 .booklet-boards-col { display: flex; flex-direction: column; gap: 10px; }
 .booklet-board-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .booklet-board-grid .study-board-panel { max-width: 260px; }
 .booklet-board-label { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+
+/* "other lines" stubs woven into the booklet notation tree: heading/subheading
+   label plus a single muted move, no comments, no continuation past it. */
+.continuation-stub { opacity: 0.75; }
+.ply-stub { font-style: italic; }
+.ply-stub .ply-san { color: var(--ink-soft); }
 
 /* ---------- print / PDF export ---------- */
 
