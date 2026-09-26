@@ -52,7 +52,7 @@ function applyPlyStyle(node, style) {
     return;
   }
   node.heading = style.heading || '';
-  node.headingLevel = style.level === 2 ? 2 : 1;
+  node.headingLevel = style.level === 3 ? 3 : style.level === 2 ? 2 : 1;
   node.bold = !!style.bold;
   node.boxed = !!style.boxed;
 }
@@ -203,29 +203,49 @@ function allLeaves(node) {
   return node.children.flatMap(allLeaves);
 }
 
-// Groups one opening's heading nodes into a 2-level index — top-level
-// headings, each with the subheadings nested inside its own subtree —
-// matching the Heading/Subheading choice already offered when labeling a
-// move. A subheading with no level-1 ancestor heading is treated as
-// top-level too, so nothing is ever silently dropped from the index.
-// Returns [{ node, subheadings: [{ node }] }].
+// Every ancestor of `node` (root→node, inclusive) that carries a heading,
+// in path order — e.g. [Najdorf Variation, English Attack] for a
+// subheading nested under a top-level heading. Used to build breadcrumbs
+// and to find a line's outermost heading regardless of how deep it's
+// nested, without hardcoding how many heading levels exist.
+function headingChainFor(root, node) {
+  const path = pathToNode(root, node.id) || [];
+  const chain = [];
+  let cur = root;
+  for (let i = 0; i < path.length; i++) {
+    cur = cur.children[path[i]];
+    if (cur.heading) chain.push(cur);
+  }
+  return chain;
+}
+
+// True if `node` has a more specific heading somewhere in its own subtree
+// (a subheading, or a subheading nested under that, and so on) — used to
+// export only the deepest heading along each line, since a less specific
+// ancestor heading's continuation already includes everything the more
+// specific one does.
+function hasDeeperHeading(node) {
+  return node.children.some((c) => collectHeadingNodes(c).length > 0);
+}
+
+// Groups one opening's heading nodes into a nested index — each heading
+// nested inside its own nearest heading ancestor (however many levels
+// deep: Heading, Subheading, Subheading 2, ...), matching the level choice
+// offered when labeling a move. A heading with no heading ancestor at all
+// is treated as top-level, so nothing is ever silently dropped from the
+// index. Returns [{ node, subheadings: [{ node, subheadings: [...] }] }].
 function buildOpeningHeadingIndex(opening) {
   const root = opening.tree;
   const headingNodes = collectHeadingNodes(root);
   const entries = [];
   const byId = new Map();
   headingNodes.forEach((h) => {
-    const path = pathToNode(root, h.id) || [];
-    let cur = root;
-    let nearestH1 = null;
-    for (let i = 0; i < path.length - 1; i++) {
-      cur = cur.children[path[i]];
-      if (cur.heading && cur.headingLevel === 1) nearestH1 = cur;
-    }
+    const chain = headingChainFor(root, h); // ends with h itself
+    const parent = chain.length >= 2 ? chain[chain.length - 2] : null;
     const entry = { node: h, subheadings: [] };
     byId.set(h.id, entry);
-    if (h.headingLevel === 2 && nearestH1 && byId.has(nearestH1.id)) {
-      byId.get(nearestH1.id).subheadings.push(entry);
+    if (parent && byId.has(parent.id)) {
+      byId.get(parent.id).subheadings.push(entry);
     } else {
       entries.push(entry);
     }

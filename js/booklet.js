@@ -99,10 +99,11 @@ const Booklet = {
         title.className = 'booklet-index-opening-name';
         title.textContent = (color === 'white' ? '♔ ' : '♚ ') + opening.name;
         wrap.appendChild(title);
-        entries.forEach((entry) => {
-          wrap.appendChild(this.buildIndexRow(opening, entry.node, false));
-          entry.subheadings.forEach((sub) => wrap.appendChild(this.buildIndexRow(opening, sub.node, true)));
-        });
+        const addRow = (entry, depth) => {
+          wrap.appendChild(this.buildIndexRow(opening, entry.node, depth));
+          entry.subheadings.forEach((sub) => addRow(sub, depth + 1));
+        };
+        entries.forEach((entry) => addRow(entry, 0));
         this.els.indexTree.appendChild(wrap);
       });
     });
@@ -112,9 +113,10 @@ const Booklet = {
     this.refreshIndexHighlights();
   },
 
-  buildIndexRow(opening, node, isSub) {
+  buildIndexRow(opening, node, depth) {
     const row = document.createElement('div');
-    row.className = 'booklet-index-entry ' + (isSub ? 'booklet-index-subheading-row' : 'booklet-index-heading-row');
+    const depthClass = depth === 0 ? 'booklet-index-heading-row' : depth === 1 ? 'booklet-index-subheading-row' : 'booklet-index-subheading2-row';
+    row.className = 'booklet-index-entry ' + depthClass;
     row.dataset.openingId = opening.id;
     row.dataset.nodeId = node.id;
     const cb = document.createElement('input');
@@ -148,25 +150,14 @@ const Booklet = {
 
   // ---------- default board set ----------
 
-  // Heading position, subheading position (if the selected node is a
-  // subheading), the selected node's own position, and its ending(s) —
-  // deduplicated, since e.g. a heading with no subheading collapses several
-  // of these into the same position.
+  // Heading position, subheading position, subheading 2 position (whichever
+  // of these the line actually has), the selected node's own position, and
+  // its ending(s) — deduplicated, since e.g. a heading with no subheading
+  // collapses several of these into the same position.
   defaultBoardsFor(opening, node) {
     const root = opening.tree;
-    let headingNode = null;
-    let subheadingNode = null;
-    if (node.headingLevel === 2) {
-      subheadingNode = node;
-      const path = pathToNode(root, node.id) || [];
-      let cur = root;
-      for (let i = 0; i < path.length - 1; i++) {
-        cur = cur.children[path[i]];
-        if (cur.heading && cur.headingLevel === 1) headingNode = cur;
-      }
-    } else {
-      headingNode = node;
-    }
+    const byLevel = {};
+    headingChainFor(root, node).forEach((h) => { byLevel[h.headingLevel || 1] = h; });
     const boards = [];
     const seen = new Set();
     const pushUnique = (n, label) => {
@@ -174,8 +165,9 @@ const Booklet = {
       seen.add(n.id);
       boards.push({ path: pathToNode(root, n.id) || [], label });
     };
-    pushUnique(headingNode, 'Heading');
-    pushUnique(subheadingNode, 'Subheading');
+    pushUnique(byLevel[1], 'Heading');
+    pushUnique(byLevel[2], 'Subheading');
+    pushUnique(byLevel[3], 'Subheading 2');
     pushUnique(node, 'Selected move');
     const leaves = allLeaves(node);
     leaves.slice(0, 3).forEach((leaf, i) => pushUnique(leaf, leaves.length > 1 ? `Ending ${i + 1}` : 'Ending'));
@@ -218,14 +210,6 @@ const Booklet = {
     // breadcrumb
     const bcEl = document.getElementById(`bookletBreadcrumb${n}`);
     bcEl.innerHTML = '';
-    const isSub = node.headingLevel === 2;
-    let parentHeadingText = '';
-    if (isSub) {
-      const path = pathToNode(opening.tree, node.id) || [];
-      let cur = opening.tree; let h = null;
-      for (let i = 0; i < path.length - 1; i++) { cur = cur.children[path[i]]; if (cur.heading && cur.headingLevel === 1) h = cur; }
-      parentHeadingText = h ? h.heading : '';
-    }
     const addCrumb = (text, cls) => {
       const s = document.createElement('span');
       if (cls) s.className = cls;
@@ -234,9 +218,7 @@ const Booklet = {
     };
     const sep = () => addCrumb('›', 'crumb-sep');
     addCrumb((opening.color === 'white' ? 'White' : 'Black') + ' · ' + opening.name, 'crumb-opening');
-    sep();
-    if (parentHeadingText) { addCrumb(parentHeadingText); sep(); }
-    addCrumb(node.heading);
+    headingChainFor(opening.tree, node).forEach((h) => { sep(); addCrumb(h.heading); });
 
     // notation — the full path from the opening's root through this line,
     // with any other headed line branching off shown as a compressed stub
@@ -440,17 +422,23 @@ const Booklet = {
     const targets = [];
     const byColor = { white: [], black: [] };
     this.openings.forEach((o) => byColor[o.color].push(o));
+    const addEntry = (opening, entry) => {
+      targets.push({ opening, node: entry.node });
+      entry.subheadings.forEach((s) => addEntry(opening, s));
+    };
     ['white', 'black'].forEach((color) => {
       byColor[color].sort((a, b) => a.name.localeCompare(b.name)).forEach((opening) => {
-        buildOpeningHeadingIndex(opening).forEach((e) => {
-          targets.push({ opening, node: e.node });
-          e.subheadings.forEach((s) => targets.push({ opening, node: s.node }));
-        });
+        buildOpeningHeadingIndex(opening).forEach((e) => addEntry(opening, e));
       });
     });
     return targets;
   },
 
+  // "Export all" exports only the deepest heading along each line — a
+  // heading with a subheading (with or without its own subheading 2) is
+  // skipped in favor of that more specific one, since its continuation
+  // already covers everything the heading's own page would show.
+  // "Export selected" honors exactly what's checked, with no such pruning.
   exportPdf(mode) {
     let targets;
     if (mode === 'selected') {
@@ -458,7 +446,7 @@ const Booklet = {
       const keys = this.selectedForExport;
       targets = this.allTargetsInOrder().filter((t) => keys.has(t.opening.id + ':' + t.node.id));
     } else {
-      targets = this.allTargetsInOrder();
+      targets = this.allTargetsInOrder().filter((t) => !hasDeeperHeading(t.node));
     }
     if (!targets.length) { toast('Nothing to export'); return; }
     this.buildPrintDocument(targets);
@@ -490,7 +478,7 @@ const Booklet = {
       owrap.appendChild(oname);
       g.nodes.forEach((node) => {
         const row = document.createElement('div');
-        row.className = node.headingLevel === 2 ? 'print-index-subheading' : 'print-index-heading';
+        row.className = node.headingLevel === 3 ? 'print-index-subheading2' : node.headingLevel === 2 ? 'print-index-subheading' : 'print-index-heading';
         row.textContent = node.heading;
         owrap.appendChild(row);
       });
@@ -507,15 +495,8 @@ const Booklet = {
   // a fresh "right" page with just this line's own heading and its
   // reference boards in a grid.
   buildPrintPage(opening, node) {
-    const isSub = node.headingLevel === 2;
-    let parentHeadingText = '';
-    if (isSub) {
-      const path = pathToNode(opening.tree, node.id) || [];
-      let cur = opening.tree; let h = null;
-      for (let i = 0; i < path.length - 1; i++) { cur = cur.children[path[i]]; if (cur.heading && cur.headingLevel === 1) h = cur; }
-      parentHeadingText = h ? h.heading : '';
-    }
-    const topHeadingText = (isSub && parentHeadingText) ? parentHeadingText : node.heading;
+    const chain = headingChainFor(opening.tree, node);
+    const topHeadingText = chain.length ? chain[0].heading : node.heading;
 
     const notationPage = document.createElement('div');
     notationPage.className = 'print-page print-page-notation';

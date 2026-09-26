@@ -25,9 +25,10 @@ on your PC gives you two separate, independent libraries.
 - Add a comment **before** and **after** any move.
 - Mark any move with a color (green/red/blue/yellow/orange/purple) and an
   icon (!, !!, !?, ?!, ?, ??) — both shown right in the move list.
-- Right-click any move to label it with a heading or subheading (e.g.
-  "Rossolimo Variation") in a gold accent color, bold or box it for
-  emphasis, and reorder it earlier/later among its sibling continuations —
+- Right-click any move to label it with a heading, subheading, or
+  subheading 2 (e.g. "Rossolimo Variation") in a gold accent color, bold or
+  box it for emphasis, and reorder it earlier/later among its sibling
+  continuations —
   the same right-click editor as on the Study & Analysis page, since all of
   this lives on the move itself and shows up on both pages immediately,
   with no separate save step. Reordering keeps any saved Study board
@@ -77,8 +78,9 @@ A dedicated reference/comparison view, toggled from the Study & Analysis
 toolbar:
 
 - A repertoire-wide **index** on the left — every opening, with its
-  headings and their subheadings nested underneath (three levels: opening
-  → heading → subheading) — narrow enough to stay out of the way.
+  headings, subheadings, and subheading 2s nested underneath (four levels:
+  opening → heading → subheading → subheading 2) — narrow enough to stay
+  out of the way.
 - Two independent **booklets** side by side. Click an index entry to load
   it into whichever booklet is active (click a booklet to make it active);
   the two can show lines from completely different repertoires, for
@@ -91,15 +93,20 @@ toolbar:
   switching without leaving the tree. The notation panel has a drag handle
   to resize it to fit a whole line without scrolling. A handful of boards
   auto-populate at the heading position, the subheading position, the
-  line's own ending(s), and a freely-adjustable "selected move" board — add
-  or remove boards, and step any of them with ◀ / ▶ independently. All of
-  it (which line each booklet shows, every board's position) saves
-  automatically.
+  subheading 2 position, the line's own ending(s), and a freely-adjustable
+  "selected move" board — add or remove boards, and step any of them with
+  ◀ / ▶ independently. All of it (which line each booklet shows, every
+  board's position) saves automatically.
 - **Export to PDF**: check specific headings in the index and "Export
   selected", or "Export all" for the whole repertoire in the order it
-  appears in the index. Opens the browser's print dialog (choose "Save as
-  PDF") with a table of contents page, then each line as a two-page spread
-  — A5 portrait, "Book Antiqua" — a "left" page with the heading and opening
+  appears in the index. "Export all" exports only the most specific heading
+  along each line — a heading with a subheading (or a subheading with its
+  own subheading 2) is skipped in favor of that more specific one, since
+  its page already covers everything the less specific one would show;
+  "Export selected" exports exactly what's checked, regardless of nesting.
+  Opens the browser's print dialog (choose "Save as PDF") with a two-column
+  table of contents page, then each line as a two-page spread — A5
+  portrait, "Book Antiqua" — a "left" page with the heading and opening
   name followed by the full notation tree and comments, then a "right" page
   with that line's own heading and its reference boards in a grid; printed
   double-sided, the two land on facing pages.

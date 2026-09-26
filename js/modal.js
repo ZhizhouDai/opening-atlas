@@ -57,6 +57,7 @@ function modalPlyStyleEditor(existing, opts = {}) {
       <div class="modal-btn-row">
         <button type="button" class="btn btn-ghost level-btn" data-level="1">Heading</button>
         <button type="button" class="btn btn-ghost level-btn" data-level="2">Subheading</button>
+        <button type="button" class="btn btn-ghost level-btn" data-level="3">Subheading 2</button>
       </div>
       <p class="modal-section-label">Emphasis</p>
       <div class="modal-btn-row">
@@ -77,7 +78,7 @@ function modalPlyStyleEditor(existing, opts = {}) {
     `;
     const input = box.querySelector('.modal-input');
     input.value = existing ? existing.heading || '' : '';
-    let level = existing && existing.level === 2 ? 2 : 1;
+    let level = existing && existing.level === 3 ? 3 : existing && existing.level === 2 ? 2 : 1;
     let bold = !!(existing && existing.bold);
     let boxed = !!(existing && existing.boxed);
 

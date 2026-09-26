@@ -362,6 +362,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .continuation:first-child > .tree-heading { margin-top: 0; }
 .tree-heading.level-1 { font-size: 15px; font-weight: 600; }
 .tree-heading.level-2 { font-size: 13px; font-weight: 500; font-style: italic; color: var(--heading-soft); margin-top: 6px; }
+.tree-heading.level-3 { font-size: 12px; font-weight: 400; font-style: italic; color: var(--ink-faint); margin-top: 4px; }
 
 .branch-outline-ellipsis { color: var(--ink-faint); margin: 0 6px; font-weight: 600; }
 .ply.headable:hover { box-shadow: inset 0 -2px 0 var(--heading); }
@@ -533,6 +534,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-index-opening-name { font-weight: 700; font-size: 13px; color: var(--ink); margin-bottom: 3px; }
 .booklet-index-heading-row { margin-left: 8px; }
 .booklet-index-subheading-row { margin-left: 18px; }
+.booklet-index-subheading2-row { margin-left: 28px; }
 .booklet-index-entry {
   display: flex;
   align-items: center;
@@ -548,6 +550,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-index-entry input[type="checkbox"] { margin: 0; flex-shrink: 0; }
 .booklet-index-entry .entry-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--heading); }
 .booklet-index-subheading-row .entry-label { color: var(--heading-soft); font-style: italic; }
+.booklet-index-subheading2-row .entry-label { color: var(--ink-faint); font-style: italic; font-size: 12px; }
 .booklet-index-empty { font-size: 13px; padding: 6px 2px; }
 
 .booklet-slot { min-height: 220px; }
@@ -589,12 +592,13 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .print-index-page { break-after: page; }
-  .print-index-title { font-size: 16pt; font-weight: 700; margin: 0 0 6mm; }
-  .print-index-opening { margin-bottom: 4mm; }
+  .print-index-page { break-after: page; column-count: 2; column-gap: 8mm; }
+  .print-index-title { column-span: all; font-size: 16pt; font-weight: 700; margin: 0 0 6mm; }
+  .print-index-opening { break-inside: avoid; margin-bottom: 4mm; }
   .print-index-opening-name { font-weight: 700; font-size: 12pt; margin-bottom: 1mm; }
   .print-index-heading { margin-left: 5mm; font-size: 10.5pt; }
   .print-index-subheading { margin-left: 10mm; font-size: 10pt; font-style: italic; }
+  .print-index-subheading2 { margin-left: 15mm; font-size: 9.5pt; font-style: italic; }
   .print-page { break-after: page; font-size: 9pt; line-height: 1.15; }
   .print-page:last-child { break-after: auto; }
 

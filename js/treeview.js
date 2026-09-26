@@ -77,7 +77,7 @@ function renderTree(container, rootNode, opts = {}) {
   function appendHeading(parentEl, node) {
     if (!node.heading) return;
     const h = document.createElement('div');
-    h.className = 'tree-heading level-' + (node.headingLevel === 2 ? 2 : 1);
+    h.className = 'tree-heading level-' + (node.headingLevel === 3 ? 3 : node.headingLevel === 2 ? 2 : 1);
     h.textContent = node.heading;
     parentEl.appendChild(h);
   }
@@ -208,7 +208,7 @@ function renderBranchOutline(container, rootNode, opts = {}) {
   function appendHeading(parentEl, node) {
     if (!node.heading) return;
     const h = document.createElement('div');
-    h.className = 'tree-heading level-' + (node.headingLevel === 2 ? 2 : 1);
+    h.className = 'tree-heading level-' + (node.headingLevel === 3 ? 3 : node.headingLevel === 2 ? 2 : 1);
     h.textContent = node.heading;
     parentEl.appendChild(h);
   }
@@ -372,7 +372,7 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
   function appendHeading(parentEl, node) {
     if (!node.heading) return;
     const h = document.createElement('div');
-    h.className = 'tree-heading level-' + (node.headingLevel === 2 ? 2 : 1);
+    h.className = 'tree-heading level-' + (node.headingLevel === 3 ? 3 : node.headingLevel === 2 ? 2 : 1);
     h.textContent = node.heading;
     parentEl.appendChild(h);
   }
