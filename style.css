@@ -649,7 +649,16 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 
   .print-notation .move-line { line-height: 1.15; }
   #printRoot .print-notation .tree-comment { font-size: 8.5pt; color: #444; }
-  #printRoot .print-notation .tree-heading { font-size: 10pt; color: var(--heading); margin: 2mm 0 0.5mm; }
+  #printRoot .print-notation .tree-heading { font-size: 10pt; margin: 2mm 0 0.5mm; }
+  #printRoot .print-notation .tree-heading.level-1 { color: var(--heading); }
+  #printRoot .print-notation .tree-heading.level-2 { color: var(--heading-soft); }
+  #printRoot .print-notation .tree-heading.level-3 { color: var(--heading-faint); }
+  #printRoot .ply.mark-green .ply-san { color: #1f8a4c; }
+  #printRoot .ply.mark-red .ply-san { color: #c0392b; }
+  #printRoot .ply.mark-blue .ply-san { color: #2f6fb0; }
+  #printRoot .ply.mark-yellow .ply-san { color: #a1791a; }
+  #printRoot .ply.mark-orange .ply-san { color: #b5651d; }
+  #printRoot .ply.mark-purple .ply-san { color: #7a4bb0; }
   .print-notation .continuation {
     margin: 1mm 0 1mm 3mm;
     padding-left: 1.5mm;
