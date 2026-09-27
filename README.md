@@ -65,6 +65,11 @@ on your PC gives you two separate, independent libraries.
   Click a board to make it active, then click any move in the notation to
   jump that board there — the move gets a colored dot for every board
   currently sitting on it.
+- **Show diagrams of key branching points** replaces the whole board set
+  with one board per headed node in the tree (capped at 9), each named for
+  its full heading chain — a quick way to survey every named line at a
+  glance. The boards stay fully editable afterward (step, rename, lock,
+  annotate) and save normally.
 - Each board has its own **◀ / ▶** controls to step through the line; at a
   branch point, **▶** asks which continuation to follow.
 - Right-click-drag to draw an arrow, right-click a square to circle it —
@@ -127,9 +132,11 @@ toolbar:
   continuation itself is never touched or truncated.
 - **Export the full tree**: each opening in the index has its own "Full
   tree (A4)" button — a separate, standalone export of that opening's
-  complete move tree (every branch and heading, no diagrams) as a dense
-  text-only reference sheet on A4 paper, for when you want the whole
-  repertoire at a glance rather than one line at a time.
+  complete move tree (every branch and heading, text-only) as a dense
+  reference sheet on A4 paper, for when you want the whole repertoire at a
+  glance rather than one line at a time. Followed by a diagram sheet — one
+  board per key branching point (every headed node), four to a row and
+  titled with its full heading chain, spanning as many A4 pages as needed.
 
 ## Design
 

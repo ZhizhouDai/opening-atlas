@@ -684,6 +684,10 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   #printRoot .print-board-label { font-size: 7.5pt; margin: 0 0 0.8mm; color: #333; }
   .print-board-block .board { max-width: 100%; border: 0.3mm solid #999; }
   .print-board-block .coord { display: none; }
+
+  /* The full-tree export's "Key Branching Points" diagram sheet — four
+     boards per row on the wider A4 page, however many rows/pages it takes. */
+  .print-diagrams-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; align-content: start; }
 }
 
 @media (max-width: 980px) {

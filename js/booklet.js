@@ -492,6 +492,42 @@ const Booklet = {
     renderTree(notationCol, opening.tree, {});
     page.appendChild(notationCol);
     root.appendChild(page);
+
+    // A second, diagram-only sheet: one board per key branching point (every
+    // headed node in the tree), four to a row, each titled with its full
+    // heading chain so a nested subheading's diagram is unambiguous even
+    // out of context. As many A4 pages as needed — unlike the per-line
+    // booklet export, this reference sheet is never pruned to fit one page.
+    const headingNodes = collectHeadingNodes(opening.tree);
+    if (headingNodes.length) {
+      const diagramsPage = document.createElement('div');
+      diagramsPage.className = 'print-page print-full-tree-page';
+      const dTitle = document.createElement('div');
+      dTitle.className = 'print-page-title';
+      dTitle.textContent = 'Key Branching Points';
+      diagramsPage.appendChild(dTitle);
+      const grid = document.createElement('div');
+      grid.className = 'print-diagrams-grid';
+      headingNodes.forEach((node) => {
+        const block = document.createElement('div');
+        block.className = 'print-board-block';
+        const label = document.createElement('div');
+        label.className = 'print-board-label';
+        label.textContent = headingChainFor(opening.tree, node).map((h) => h.heading).join(' › ');
+        block.appendChild(label);
+        const mount = document.createElement('div');
+        mount.className = 'board-mount';
+        block.appendChild(mount);
+        const board = new Board(mount, { interactive: false });
+        board.orientation = opening.color === 'black' ? 'b' : 'w';
+        board.setPosition(node.fenAfter, board.orientation);
+        board.setLastMove(node.uci ? node.uci.slice(0, 2) : null, node.uci ? node.uci.slice(2, 4) : null);
+        grid.appendChild(block);
+      });
+      diagramsPage.appendChild(grid);
+      root.appendChild(diagramsPage);
+    }
+
     setTimeout(() => window.print(), 50);
   },
 

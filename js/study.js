@@ -36,6 +36,7 @@ const Study = {
       btnToggleComments: document.getElementById('btnToggleComments'),
       btnToggleOutline: document.getElementById('btnToggleOutline'),
       btnAddBoard: document.getElementById('btnAddBoard'),
+      btnShowBranchingDiagrams: document.getElementById('btnShowBranchingDiagrams'),
       boardCountLabel: document.getElementById('boardCountLabel'),
     };
 
@@ -49,6 +50,7 @@ const Study = {
     this.els.btnToggleComments.addEventListener('click', () => this.toggleAllComments());
     this.els.btnToggleOutline.addEventListener('click', () => this.toggleOutline());
     this.els.btnAddBoard.addEventListener('click', () => this.addBoard());
+    this.els.btnShowBranchingDiagrams.addEventListener('click', () => this.showKeyBranchingDiagrams());
 
     await this.loadOpenings();
   },
@@ -166,6 +168,31 @@ const Study = {
     if (this.activeBoardIdx >= this.boardPaths.length) this.activeBoardIdx = this.boardPaths.length - 1;
     this.markDirty();
     this.rebuildBoards();
+  },
+
+  // Replaces the whole board set with one board per key branching point
+  // (every headed node in the tree, in document order) — a quick way to
+  // survey the repertoire's named lines at a glance, each board named for
+  // its full heading chain. Capped at MAX_BOARDS; still freely editable
+  // afterward (step, rename, lock, annotate, add/remove) same as any other
+  // board arrangement, and included the next time you hit Save.
+  showKeyBranchingDiagrams() {
+    if (!this.opening) return;
+    const headingNodes = collectHeadingNodes(this.opening.tree);
+    if (!headingNodes.length) {
+      toast('No headings yet — right-click a move to label one first.');
+      return;
+    }
+    const capped = headingNodes.slice(0, MAX_BOARDS);
+    this.boardPaths = capped.map((n) => pathToNode(this.opening.tree, n.id) || []);
+    this.boardNames = capped.map((n) => headingChainFor(this.opening.tree, n).map((h) => h.heading).join(' › '));
+    this.boardLocked = capped.map(() => false);
+    this.activeBoardIdx = 0;
+    this.markDirty();
+    this.rebuildBoards();
+    toast(headingNodes.length > MAX_BOARDS
+      ? `Showing the first ${MAX_BOARDS} of ${headingNodes.length} branching points`
+      : `Showing all ${headingNodes.length} branching point${headingNodes.length === 1 ? '' : 's'}`);
   },
 
   async openBoardNameEditor(i) {
