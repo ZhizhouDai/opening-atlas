@@ -141,10 +141,11 @@ toolbar:
   chain, spanning as many A4 pages as needed. A "Diagrams only (A4)" button
   next to it skips the notation and exports just that sheet, titled with
   the opening rather than a generic label.
-- **E-ink friendly boards**: a checkbox in the index turns every exported
-  board's dark squares light gray instead of the theme's dark green, for
-  better contrast on e-ink displays — applies to every export (per-line
-  booklet, full tree, diagrams only).
+- **E-ink friendly boards**: a checkbox in the index swaps every exported
+  board's two close-toned greens for high-contrast grayscale — dark squares
+  become light gray, light squares become black — for better legibility on
+  e-ink displays. Applies to every export (per-line booklet, full tree,
+  diagrams only).
 
 ## Design
 
