@@ -33,6 +33,10 @@ on your PC gives you two separate, independent libraries.
   this lives on the move itself and shows up on both pages immediately,
   with no separate save step. Reordering keeps any saved Study board
   positions pointed at the same moves, wherever they land in the new order.
+- The same right-click editor can also give a move a short free-text
+  **label** (e.g. "TN", "Trap") shown inline right next to it — unlike a
+  heading, a label never starts a new line and isn't part of the outline or
+  booklet index, just a quick personal tag.
 - Export PGN: copy the current opening to the clipboard, download it as a
   `.pgn` file, or download every opening for the selected color as one
   multi-game PGN file.

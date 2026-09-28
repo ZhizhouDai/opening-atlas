@@ -5,13 +5,16 @@
 //
 // Node shape:
 //   { id, ply, san, uci, fenBefore, fenAfter,
-//     commentBefore, commentAfter, markColor, markGlyph,
+//     commentBefore, commentAfter, markColor, markGlyph, label,
 //     heading, headingLevel, bold, boxed, children: [Node] }
 // The root node represents the starting position and has ply 0, san null.
-// heading/headingLevel/bold/boxed are presentation styling editable from
-// either page's notation panel (right-click a move) — they live on the
-// node itself, alongside comments and marks, so both pages always show the
-// same thing without needing to sync anything separately.
+// heading/headingLevel/bold/boxed/label are presentation styling editable
+// from either page's notation panel (right-click a move) — they live on
+// the node itself, alongside comments and marks, so both pages always show
+// the same thing without needing to sync anything separately. `label` is a
+// short free-text tag shown inline right next to the move (e.g. "TN",
+// "Trap") — unlike heading/subheading/subheading 2, it never starts a new
+// line and isn't part of the outline or booklet index.
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -25,7 +28,7 @@ function makeRootNode() {
     id: 'root', ply: 0, san: null, uci: null,
     fenBefore: null, fenAfter: START_FEN,
     commentBefore: '', commentAfter: '',
-    markColor: null, markGlyph: null,
+    markColor: null, markGlyph: null, label: '',
     heading: '', headingLevel: 1, bold: false, boxed: false,
     children: [],
   };
@@ -37,20 +40,21 @@ function makeMoveNode(parent, applied, fenBefore, fenAfter) {
     uci: applied.from + applied.to + (applied.promotion || ''),
     fenBefore, fenAfter,
     commentBefore: '', commentAfter: '',
-    markColor: null, markGlyph: null,
+    markColor: null, markGlyph: null, label: '',
     heading: '', headingLevel: 1, bold: false, boxed: false,
     children: [],
   };
 }
 
 // Applies a {heading, level, bold, boxed, commentBefore, commentAfter,
-// markColor, markGlyph} result from modalPlyStyleEditor to a node, or
-// resets all of it to defaults when `style` is null (the editor's "Clear"
-// action).
+// markColor, markGlyph, label} result from modalPlyStyleEditor to a node,
+// or resets all of it to defaults when `style` is null (the editor's
+// "Clear" action).
 function applyPlyStyle(node, style) {
   if (!style) {
     node.heading = ''; node.headingLevel = 1; node.bold = false; node.boxed = false;
     node.commentBefore = ''; node.commentAfter = ''; node.markColor = null; node.markGlyph = null;
+    node.label = '';
     return;
   }
   node.heading = style.heading || '';
@@ -61,6 +65,7 @@ function applyPlyStyle(node, style) {
   node.commentAfter = style.commentAfter || '';
   node.markColor = style.markColor || null;
   node.markGlyph = style.markGlyph || '';
+  node.label = style.label || '';
 }
 
 function findNode(root, id) {

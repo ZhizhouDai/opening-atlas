@@ -102,6 +102,12 @@ function renderTree(container, rootNode, opts = {}) {
     sanText.className = 'ply-san';
     sanText.textContent = node.san + (node.markGlyph || '');
     span.appendChild(sanText);
+    if (node.label) {
+      const labelEl = document.createElement('span');
+      labelEl.className = 'ply-label';
+      labelEl.textContent = node.label;
+      span.appendChild(labelEl);
+    }
     const dots = document.createElement('span');
     dots.className = 'ply-dots';
     span.appendChild(dots);
@@ -238,6 +244,12 @@ function renderBranchOutline(container, rootNode, opts = {}) {
     sanText.className = 'ply-san';
     sanText.textContent = node.san + (node.markGlyph || '');
     span.appendChild(sanText);
+    if (node.label) {
+      const labelEl = document.createElement('span');
+      labelEl.className = 'ply-label';
+      labelEl.textContent = node.label;
+      span.appendChild(labelEl);
+    }
     const dots = document.createElement('span');
     dots.className = 'ply-dots';
     span.appendChild(dots);
@@ -410,6 +422,12 @@ function renderBookletTree(container, opening, selectedNodeId, opts = {}) {
     sanText.className = 'ply-san';
     sanText.textContent = node.san + (node.markGlyph || '');
     span.appendChild(sanText);
+    if (node.label) {
+      const labelEl = document.createElement('span');
+      labelEl.className = 'ply-label';
+      labelEl.textContent = node.label;
+      span.appendChild(labelEl);
+    }
     const dots = document.createElement('span');
     dots.className = 'ply-dots';
     span.appendChild(dots);

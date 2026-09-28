@@ -316,11 +316,11 @@ const Study = {
     const node = findNode(this.opening.tree, nodeId);
     const parent = findParent(this.opening.tree, nodeId);
     const idx = parent ? parent.children.indexOf(node) : -1;
-    const existing = (node.heading || node.bold || node.boxed || node.commentBefore || node.commentAfter || node.markColor || node.markGlyph)
+    const existing = (node.heading || node.bold || node.boxed || node.commentBefore || node.commentAfter || node.markColor || node.markGlyph || node.label)
       ? {
         heading: node.heading, level: node.headingLevel, bold: node.bold, boxed: node.boxed,
         commentBefore: node.commentBefore, commentAfter: node.commentAfter,
-        markColor: node.markColor, markGlyph: node.markGlyph,
+        markColor: node.markColor, markGlyph: node.markGlyph, label: node.label,
       }
       : null;
     const result = await modalPlyStyleEditor(existing, {

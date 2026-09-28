@@ -45,9 +45,9 @@ function modalPrompt(message, defaultValue) {
 // made from any one of them shows up on the others immediately — all of it
 // lives on the move node itself and is saved as part of the opening.
 // Resolves to {heading, level, bold, boxed, commentBefore, commentAfter,
-// markColor, markGlyph} to save, {reorder: -1 | 1} to move the ply up/down
-// among its siblings (applied immediately, closing the dialog), null to
-// clear everything, or undefined if cancelled.
+// markColor, markGlyph, label} to save, {reorder: -1 | 1} to move the ply
+// up/down among its siblings (applied immediately, closing the dialog),
+// null to clear everything, or undefined if cancelled.
 //
 // opts: { canMoveUp, canMoveDown } — whether a sibling exists in that
 // direction; the "Order" section is omitted entirely when neither applies.
@@ -61,6 +61,8 @@ function modalPlyStyleEditor(existing, opts = {}) {
       <textarea class="modal-input" data-field="commentBefore" rows="2" placeholder="e.g. Preparing …"></textarea>
       <p class="modal-section-label">Comment after this move</p>
       <textarea class="modal-input" data-field="commentAfter" rows="2" placeholder="e.g. Better is … here."></textarea>
+      <p class="modal-section-label">Label (shown inline next to the move)</p>
+      <input type="text" class="modal-input" data-field="label" placeholder="e.g. &quot;TN&quot;, &quot;Trap&quot;" />
       <p class="modal-section-label">Heading</p>
       <input type="text" class="modal-input" data-field="heading" placeholder="Heading text, e.g. &quot;Schmidt Variation&quot;" />
       <div class="modal-btn-row">
@@ -97,9 +99,11 @@ function modalPlyStyleEditor(existing, opts = {}) {
     const headingInput = box.querySelector('[data-field="heading"]');
     const commentBeforeInput = box.querySelector('[data-field="commentBefore"]');
     const commentAfterInput = box.querySelector('[data-field="commentAfter"]');
+    const labelInput = box.querySelector('[data-field="label"]');
     headingInput.value = existing ? existing.heading || '' : '';
     commentBeforeInput.value = existing ? existing.commentBefore || '' : '';
     commentAfterInput.value = existing ? existing.commentAfter || '' : '';
+    labelInput.value = existing ? existing.label || '' : '';
     let level = existing && existing.level === 3 ? 3 : existing && existing.level === 2 ? 2 : 1;
     let bold = !!(existing && existing.bold);
     let boxed = !!(existing && existing.boxed);
@@ -152,12 +156,13 @@ function modalPlyStyleEditor(existing, opts = {}) {
       const heading = headingInput.value.trim();
       const commentBefore = commentBeforeInput.value.trim();
       const commentAfter = commentAfterInput.value.trim();
+      const label = labelInput.value.trim();
       const result = {
-        heading, level, bold, boxed, commentBefore, commentAfter,
+        heading, level, bold, boxed, commentBefore, commentAfter, label,
         markColor: markColor === 'none' ? null : markColor,
         markGlyph,
       };
-      const isEmpty = !heading && !bold && !boxed && !commentBefore && !commentAfter && !result.markColor && !markGlyph;
+      const isEmpty = !heading && !bold && !boxed && !commentBefore && !commentAfter && !label && !result.markColor && !markGlyph;
       close(isEmpty ? null : result);
     };
     box.querySelector('[data-act="ok"]').addEventListener('click', save);
