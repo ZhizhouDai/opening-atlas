@@ -143,9 +143,9 @@ toolbar:
   the opening rather than a generic label.
 - **E-ink friendly boards**: a checkbox in the index swaps every exported
   board's two close-toned greens for high-contrast grayscale — dark squares
-  become light gray, light squares become black — for better legibility on
-  e-ink displays. Applies to every export (per-line booklet, full tree,
-  diagrams only).
+  become light gray, light squares become plain white — for better
+  legibility on e-ink displays. Applies to every export (per-line booklet,
+  full tree, diagrams only).
 
 ## Design
 
