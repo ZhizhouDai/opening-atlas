@@ -29,6 +29,7 @@ const Booklet = {
       indexTree: document.getElementById('bookletIndexTree'),
       btnExportSelected: document.getElementById('btnExportSelected'),
       btnExportAll: document.getElementById('btnExportAll'),
+      chkEink: document.getElementById('chkEinkExport'),
       saveStatus: document.getElementById('studySaveStatus'),
       btnSaveStudy: document.getElementById('btnSaveStudy'),
     };
@@ -108,13 +109,23 @@ const Booklet = {
         const titleText = document.createElement('span');
         titleText.textContent = (color === 'white' ? '♔ ' : '♚ ') + opening.name;
         title.appendChild(titleText);
+        const exportBtnGroup = document.createElement('span');
+        exportBtnGroup.className = 'booklet-index-export-btns';
         const exportTreeBtn = document.createElement('button');
         exportTreeBtn.type = 'button';
         exportTreeBtn.className = 'btn btn-ghost tiny booklet-index-export-tree';
         exportTreeBtn.textContent = 'Full tree (A4)';
         exportTreeBtn.title = "Print this opening's entire notation tree, no diagrams, on A4 paper";
         exportTreeBtn.addEventListener('click', (e) => { e.stopPropagation(); this.exportFullTree(opening); });
-        title.appendChild(exportTreeBtn);
+        exportBtnGroup.appendChild(exportTreeBtn);
+        const exportDiagramsBtn = document.createElement('button');
+        exportDiagramsBtn.type = 'button';
+        exportDiagramsBtn.className = 'btn btn-ghost tiny booklet-index-export-tree';
+        exportDiagramsBtn.textContent = 'Diagrams only (A4)';
+        exportDiagramsBtn.title = "Print only this opening's key branching point diagrams, no notation, on A4 paper";
+        exportDiagramsBtn.addEventListener('click', (e) => { e.stopPropagation(); this.exportDiagramsOnly(opening); });
+        exportBtnGroup.appendChild(exportDiagramsBtn);
+        title.appendChild(exportBtnGroup);
         wrap.appendChild(title);
         const addRow = (entry, depth) => {
           wrap.appendChild(this.buildIndexRow(opening, entry.node, depth));
@@ -471,6 +482,7 @@ const Booklet = {
     }
     if (!targets.length) { toast('Nothing to export'); return; }
     this.buildPrintDocument(targets);
+    this.applyEinkMode();
     setTimeout(() => window.print(), 50);
   },
 
@@ -478,9 +490,12 @@ const Booklet = {
   // branch and heading, real headings not stubs) as plain notation with no
   // board diagrams, on A4 paper — a denser reference sheet than the per-line
   // booklet spread, for when you want the whole repertoire at a glance.
+  // Followed by a diagram sheet (see buildDiagramsPage) covering every key
+  // branching point.
   exportFullTree(opening) {
     const root = document.getElementById('printRoot');
     root.innerHTML = '';
+    this.applyEinkMode();
     const page = document.createElement('div');
     page.className = 'print-page print-full-tree-page';
     const title = document.createElement('div');
@@ -493,42 +508,67 @@ const Booklet = {
     page.appendChild(notationCol);
     root.appendChild(page);
 
-    // A second, diagram-only sheet: one board per key branching point (every
-    // headed node in the tree), four to a row, each titled with its full
-    // heading chain so a nested subheading's diagram is unambiguous even
-    // out of context. As many A4 pages as needed — unlike the per-line
-    // booklet export, this reference sheet is never pruned to fit one page.
-    const headingNodes = collectHeadingNodes(opening.tree);
-    if (headingNodes.length) {
-      const diagramsPage = document.createElement('div');
-      diagramsPage.className = 'print-page print-full-tree-page';
-      const dTitle = document.createElement('div');
-      dTitle.className = 'print-page-title';
-      dTitle.textContent = 'Key Branching Points';
-      diagramsPage.appendChild(dTitle);
-      const grid = document.createElement('div');
-      grid.className = 'print-diagrams-grid';
-      headingNodes.forEach((node) => {
-        const block = document.createElement('div');
-        block.className = 'print-board-block';
-        const label = document.createElement('div');
-        label.className = 'print-board-label';
-        label.textContent = headingChainFor(opening.tree, node).map((h) => h.heading).join(' › ');
-        block.appendChild(label);
-        const mount = document.createElement('div');
-        mount.className = 'board-mount';
-        block.appendChild(mount);
-        const board = new Board(mount, { interactive: false });
-        board.orientation = opening.color === 'black' ? 'b' : 'w';
-        board.setPosition(node.fenAfter, board.orientation);
-        board.setLastMove(node.uci ? node.uci.slice(0, 2) : null, node.uci ? node.uci.slice(2, 4) : null);
-        grid.appendChild(block);
-      });
-      diagramsPage.appendChild(grid);
-      root.appendChild(diagramsPage);
-    }
+    const diagramsPage = this.buildDiagramsPage(opening);
+    if (diagramsPage) root.appendChild(diagramsPage);
 
     setTimeout(() => window.print(), 50);
+  },
+
+  // Just the diagram sheet, no notation — for when you want a compact
+  // visual reference of the repertoire's branching points on their own.
+  exportDiagramsOnly(opening) {
+    const diagramsPage = this.buildDiagramsPage(opening);
+    if (!diagramsPage) { toast('No headings yet — right-click a move to label one first.'); return; }
+    const root = document.getElementById('printRoot');
+    root.innerHTML = '';
+    this.applyEinkMode();
+    root.appendChild(diagramsPage);
+    setTimeout(() => window.print(), 50);
+  },
+
+  // One board per key branching point (every headed node in the tree), four
+  // to a row, each titled with its full heading chain so a nested
+  // subheading's diagram is unambiguous even out of context, and the sheet
+  // itself titled with the opening rather than a generic label. As many A4
+  // pages as needed — unlike the per-line booklet export, this reference
+  // sheet is never pruned to fit one page. Returns null if there are no
+  // headings to diagram.
+  buildDiagramsPage(opening) {
+    const headingNodes = collectHeadingNodes(opening.tree);
+    if (!headingNodes.length) return null;
+    const page = document.createElement('div');
+    page.className = 'print-page print-full-tree-page';
+    const title = document.createElement('div');
+    title.className = 'print-page-title';
+    title.textContent = (opening.color === 'white' ? 'White' : 'Black') + ' · ' + opening.name;
+    page.appendChild(title);
+    const grid = document.createElement('div');
+    grid.className = 'print-diagrams-grid';
+    headingNodes.forEach((node) => {
+      const block = document.createElement('div');
+      block.className = 'print-board-block';
+      const label = document.createElement('div');
+      label.className = 'print-board-label';
+      label.textContent = headingChainFor(opening.tree, node).map((h) => h.heading).join(' › ');
+      block.appendChild(label);
+      const mount = document.createElement('div');
+      mount.className = 'board-mount';
+      block.appendChild(mount);
+      const board = new Board(mount, { interactive: false });
+      board.orientation = opening.color === 'black' ? 'b' : 'w';
+      board.setPosition(node.fenAfter, board.orientation);
+      board.setLastMove(node.uci ? node.uci.slice(0, 2) : null, node.uci ? node.uci.slice(2, 4) : null);
+      grid.appendChild(block);
+    });
+    page.appendChild(grid);
+    return page;
+  },
+
+  // Toggles the light-gray-dark-squares variant used for e-ink displays,
+  // per the "E-ink friendly boards" checkbox — applied to #printRoot itself
+  // so it covers every export (per-line booklet, full tree, diagrams only).
+  applyEinkMode() {
+    document.getElementById('printRoot').classList.toggle('print-eink', !!(this.els.chkEink && this.els.chkEink.checked));
   },
 
   buildPrintDocument(targets) {

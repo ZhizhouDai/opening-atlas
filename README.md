@@ -135,8 +135,16 @@ toolbar:
   complete move tree (every branch and heading, text-only) as a dense
   reference sheet on A4 paper, for when you want the whole repertoire at a
   glance rather than one line at a time. Followed by a diagram sheet — one
-  board per key branching point (every headed node), four to a row and
-  titled with its full heading chain, spanning as many A4 pages as needed.
+  board per key branching point (every headed node), four to a row (each
+  label reserves the same fixed height regardless of its heading chain's
+  length, so every row of boards lines up) and titled with its full heading
+  chain, spanning as many A4 pages as needed. A "Diagrams only (A4)" button
+  next to it skips the notation and exports just that sheet, titled with
+  the opening rather than a generic label.
+- **E-ink friendly boards**: a checkbox in the index turns every exported
+  board's dark squares light gray instead of the theme's dark green, for
+  better contrast on e-ink displays — applies to every export (per-line
+  booklet, full tree, diagrams only).
 
 ## Design
 

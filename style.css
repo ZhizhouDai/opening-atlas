@@ -534,6 +534,16 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
 .booklet-index { position: sticky; top: 92px; max-height: calc(100vh - 110px); display: flex; flex-direction: column; overflow: hidden; }
 .booklet-index-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .booklet-export-row { display: flex; gap: 6px; margin: 8px 0 10px; }
+.booklet-eink-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.booklet-eink-toggle input { margin: 0; }
 .booklet-index-tree { flex: 1; }
 
 .booklet-index-opening { margin-bottom: 12px; }
@@ -547,6 +557,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   color: var(--ink);
   margin-bottom: 3px;
 }
+.booklet-index-export-btns { display: flex; gap: 6px; flex-shrink: 0; }
 .booklet-index-export-tree { flex-shrink: 0; font-size: 10.5px; padding: 2px 6px; }
 .booklet-index-heading-row { margin-left: 8px; }
 .booklet-index-subheading-row { margin-left: 18px; }
@@ -685,9 +696,25 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   .print-board-block .board { max-width: 100%; border: 0.3mm solid #999; }
   .print-board-block .coord { display: none; }
 
-  /* The full-tree export's "Key Branching Points" diagram sheet — four
-     boards per row on the wider A4 page, however many rows/pages it takes. */
+  /* The full-tree/diagrams-only export's diagram sheet — four boards per
+     row on the wider A4 page, however many rows/pages it takes. Each
+     label reserves a fixed 3-line height (bottom-aligned) regardless of
+     its actual heading-chain length, so every board on the sheet starts
+     — and therefore ends, being all the same size — at the same row
+     position instead of drifting with a longer or shorter title. */
   .print-diagrams-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; align-content: start; }
+  .print-diagrams-grid .print-board-label {
+    height: 9.2mm;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    line-height: 1.15;
+  }
+
+  /* E-ink friendly boards: light gray instead of the theme's dark green
+     squares, for better contrast/legibility on e-ink displays. */
+  #printRoot.print-eink .square.dark { background: #bfbfbf; }
 }
 
 @media (max-width: 980px) {
