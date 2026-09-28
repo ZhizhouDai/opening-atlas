@@ -145,7 +145,11 @@ toolbar:
   board's two close-toned greens for high-contrast grayscale — dark squares
   become light gray, light squares become plain white — for better
   legibility on e-ink displays. Applies to every export (per-line booklet,
-  full tree, diagrams only).
+  full tree, diagrams only). The same checkbox also switches any exported
+  notation's heading/subheading/subheading 2 colors from the theme's pale
+  gold tones — barely visible on a device like reMarkable Pro — to
+  near-black, keeping the levels distinguishable by weight/italic/size
+  instead of color.
 
 ## Design
 
