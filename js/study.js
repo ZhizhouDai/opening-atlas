@@ -222,22 +222,32 @@ const Study = {
     return { san, isBlack };
   },
 
+  // Searches every opening in the collection (both colors), not just the
+  // one currently loaded — a black repertoire's tree still records White's
+  // moves too, so this is never scoped by the searched move's own color.
   runSearch() {
-    if (!this.opening) return;
+    if (!this.openings.length) { toast('No repertoires yet'); return; }
     const { san, isBlack } = this.parseSearchQuery(this.els.searchInput.value);
     if (!san) { toast('Type a move to search for, e.g. dxe3 or ...dxe3'); return; }
+    const byColor = { white: [], black: [] };
+    this.openings.forEach((o) => byColor[o.color].push(o));
+    const orderedOpenings = ['white', 'black'].flatMap((color) => byColor[color].sort((a, b) => a.name.localeCompare(b.name)));
+
     const matches = [];
-    (function walk(node) {
-      node.children.forEach((c) => {
-        const blackMove = c.ply % 2 === 0;
-        if (blackMove === isBlack && c.san.replace(/[+#]/g, '') === san) matches.push(c);
-        walk(c);
-      });
-    }(this.opening.tree));
-    this.searchResults = matches.map((node) => ({
+    orderedOpenings.forEach((opening) => {
+      (function walk(node) {
+        node.children.forEach((c) => {
+          const blackMove = c.ply % 2 === 0;
+          if (blackMove === isBlack && c.san.replace(/[+#]/g, '') === san) matches.push({ opening, node: c });
+          walk(c);
+        });
+      }(opening.tree));
+    });
+    this.searchResults = matches.map(({ opening, node }) => ({
+      opening,
       node,
-      path: pathToNode(this.opening.tree, node.id) || [],
-      headings: headingChainFor(this.opening.tree, node).map((h) => h.heading),
+      path: pathToNode(opening.tree, node.id) || [],
+      headings: headingChainFor(opening.tree, node).map((h) => h.heading),
     }));
     this.searchBoardPaths = this.searchResults.map((r) => r.path.slice());
     this.renderSearchResults();
@@ -250,12 +260,15 @@ const Study = {
     this.els.searchResultsList.innerHTML = '';
     this.searchBoards = [];
     if (!n) return;
-    const orientation = this.opening.color === 'black' ? 'b' : 'w';
     this.searchResults.forEach((result, i) => {
       const row = document.createElement('div');
       row.className = 'study-search-result';
       const info = document.createElement('div');
       info.className = 'study-search-result-info';
+      const openingEl = document.createElement('div');
+      openingEl.className = 'study-search-result-opening';
+      openingEl.textContent = (result.opening.color === 'white' ? '♔ ' : '♚ ') + result.opening.name;
+      info.appendChild(openingEl);
       if (result.headings.length) {
         const headingsEl = document.createElement('div');
         headingsEl.className = 'study-search-result-headings';
@@ -264,7 +277,7 @@ const Study = {
       }
       const moves = document.createElement('div');
       moves.className = 'study-search-result-moves';
-      moves.textContent = this.breadcrumbFor(result.path);
+      moves.textContent = this.breadcrumbFor(result.path, result.opening.tree);
       info.appendChild(moves);
       row.appendChild(info);
 
@@ -287,7 +300,7 @@ const Study = {
       this.els.searchResultsList.appendChild(row);
 
       const board = new Board(panel.querySelector('[data-mount]'), { interactive: false });
-      board.orientation = orientation;
+      board.orientation = result.opening.color === 'black' ? 'b' : 'w';
       this.searchBoards.push(board);
 
       panel.querySelector('[data-act="prev"]').addEventListener('click', () => this.stepSearchBoard(i, -1));
@@ -299,12 +312,13 @@ const Study = {
   },
 
   renderSearchBoard(i) {
-    const node = resolvePath(this.opening.tree, this.searchBoardPaths[i]);
+    const result = this.searchResults[i];
+    const node = resolvePath(result.opening.tree, this.searchBoardPaths[i]);
     const board = this.searchBoards[i];
     board.setPosition(node.fenAfter, board.orientation);
     board.setLastMove(node.uci ? node.uci.slice(0, 2) : null, node.uci ? node.uci.slice(2, 4) : null);
     const panel = this.els.searchResultsList.children[i].querySelector('.study-search-board');
-    panel.querySelector('[data-breadcrumb]').textContent = this.breadcrumbFor(this.searchBoardPaths[i]) || 'Starting position';
+    panel.querySelector('[data-breadcrumb]').textContent = this.breadcrumbFor(this.searchBoardPaths[i], result.opening.tree) || 'Starting position';
   },
 
   setSearchBoardPath(i, path) {
@@ -319,7 +333,7 @@ const Study = {
       this.setSearchBoardPath(i, path.slice(0, -1));
       return;
     }
-    const node = resolvePath(this.opening.tree, path);
+    const node = resolvePath(this.searchResults[i].opening.tree, path);
     if (!node.children.length) { toast('End of this line'); return; }
     if (node.children.length === 1) { this.setSearchBoardPath(i, [...path, 0]); return; }
     this.openSearchBranchMenu(i, node, anchorBtn);
@@ -363,7 +377,7 @@ const Study = {
     page.className = 'print-page print-full-tree-page';
     const title = document.createElement('div');
     title.className = 'print-page-title';
-    title.textContent = `Search "${this.els.searchInput.value.trim()}" — ${this.opening.color === 'white' ? 'White' : 'Black'} · ${this.opening.name}`;
+    title.textContent = `Search "${this.els.searchInput.value.trim()}" — across all repertoires`;
     page.appendChild(title);
 
     const list = document.createElement('div');
@@ -373,6 +387,10 @@ const Study = {
       item.className = 'print-search-item';
       const info = document.createElement('div');
       info.className = 'print-search-item-info';
+      const openingEl = document.createElement('div');
+      openingEl.className = 'print-search-item-opening';
+      openingEl.textContent = (result.opening.color === 'white' ? 'White' : 'Black') + ' · ' + result.opening.name;
+      info.appendChild(openingEl);
       if (result.headings.length) {
         const headingsEl = document.createElement('div');
         headingsEl.className = 'print-search-item-headings';
@@ -380,7 +398,7 @@ const Study = {
         info.appendChild(headingsEl);
       }
       const moves = document.createElement('div');
-      moves.textContent = this.breadcrumbFor(this.searchBoardPaths[i]) || this.breadcrumbFor(result.path);
+      moves.textContent = this.breadcrumbFor(this.searchBoardPaths[i], result.opening.tree) || this.breadcrumbFor(result.path, result.opening.tree);
       info.appendChild(moves);
       item.appendChild(info);
       const boardWrap = document.createElement('div');
@@ -390,8 +408,8 @@ const Study = {
       boardWrap.appendChild(mount);
       item.appendChild(boardWrap);
       const board = new Board(mount, { interactive: false });
-      board.orientation = this.opening.color === 'black' ? 'b' : 'w';
-      const posNode = resolvePath(this.opening.tree, this.searchBoardPaths[i]);
+      board.orientation = result.opening.color === 'black' ? 'b' : 'w';
+      const posNode = resolvePath(result.opening.tree, this.searchBoardPaths[i]);
       board.setPosition(posNode.fenAfter, board.orientation);
       board.setLastMove(posNode.uci ? posNode.uci.slice(0, 2) : null, posNode.uci ? posNode.uci.slice(2, 4) : null);
       list.appendChild(item);
@@ -655,8 +673,8 @@ const Study = {
     lockBtn.textContent = locked ? 'Locked' : 'Lock';
   },
 
-  breadcrumbFor(path) {
-    let cur = this.opening.tree;
+  breadcrumbFor(path, tree) {
+    let cur = tree || this.opening.tree;
     const sans = [];
     path.forEach((idx) => {
       cur = cur.children[idx];

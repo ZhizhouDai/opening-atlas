@@ -81,14 +81,17 @@ on your PC gives you two separate, independent libraries.
   which position each board shows, every arrow/circle/note/heading) is kept
   in memory until you hit **Save**, which persists it for next time.
 - **Search a move**: type a SAN move — White's, e.g. "dxe3", or Black's
-  prefixed with "...", e.g. "...dxe3" — to find every occurrence in the
-  current opening. Results show as a list, each labeled with the line's own
-  heading/subheading chain (if it has one) above the move breadcrumb, and
-  with its own small interactive board (independent ◀ / ▶ / reset) so you
-  can step forward or back from that point without disturbing the main
-  boards. Export the results list (each board's current, possibly-stepped
-  position) to an A4 PDF, with the same e-ink friendly option (light
-  gray/white squares) as the booklet exports.
+  prefixed with "...", e.g. "...dxe3" — to find every occurrence across
+  *every* repertoire you have, both colors (a black repertoire's tree still
+  records White's moves too, so search is never limited to the opening
+  currently open). Results show as a list, each labeled with which
+  repertoire it's from and the line's own heading/subheading chain (if it
+  has one) above the move breadcrumb, and with its own small interactive
+  board (independent ◀ / ▶ / reset) so you can step forward or back from
+  that point without disturbing the main boards. Export the results list
+  (each board's current, possibly-stepped position) to an A4 PDF, with the
+  same e-ink friendly option (light gray/white squares) as the booklet
+  exports.
 
 ### Booklet mode
 
