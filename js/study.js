@@ -21,6 +21,9 @@ const Study = {
   nodeEls: new Map(),
   commentKeys: [],
   dirty: false,
+  searchResults: [], // [{ node, path }] — matches from the last search
+  searchBoardPaths: [], // one entry per search result, freely steppable
+  searchBoards: [], // Board instances, parallel to searchResults
 
   async init() {
     this.collapsedComments = new Set();
@@ -38,6 +41,14 @@ const Study = {
       btnAddBoard: document.getElementById('btnAddBoard'),
       btnShowBranchingDiagrams: document.getElementById('btnShowBranchingDiagrams'),
       boardCountLabel: document.getElementById('boardCountLabel'),
+      searchPanel: document.getElementById('studySearchPanel'),
+      searchInput: document.getElementById('studySearchInput'),
+      btnSearch: document.getElementById('btnStudySearch'),
+      searchResultsWrap: document.getElementById('studySearchResults'),
+      searchResultsCount: document.getElementById('studySearchResultsCount'),
+      searchResultsList: document.getElementById('studySearchResultsList'),
+      chkSearchEink: document.getElementById('chkStudySearchEink'),
+      btnExportSearchResults: document.getElementById('btnExportSearchResults'),
     };
 
     this.els.colorTabs.addEventListener('click', (e) => {
@@ -51,6 +62,9 @@ const Study = {
     this.els.btnToggleOutline.addEventListener('click', () => this.toggleOutline());
     this.els.btnAddBoard.addEventListener('click', () => this.addBoard());
     this.els.btnShowBranchingDiagrams.addEventListener('click', () => this.showKeyBranchingDiagrams());
+    this.els.btnSearch.addEventListener('click', () => this.runSearch());
+    this.els.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.runSearch(); });
+    this.els.btnExportSearchResults.addEventListener('click', () => this.exportSearchResults());
 
     await this.loadOpenings();
   },
@@ -195,6 +209,177 @@ const Study = {
       : `Showing all ${headingNodes.length} branching point${headingNodes.length === 1 ? '' : 's'}`);
   },
 
+  // ---------- search ----------
+
+  // "dxe3" means White played it (odd ply); "...dxe3" means Black played it
+  // (even ply) — same convention the notation itself uses for move labels.
+  // +/# are stripped from both the query and each candidate so "dxe3" also
+  // matches a stored "dxe3+".
+  parseSearchQuery(raw) {
+    const trimmed = raw.trim();
+    const isBlack = trimmed.startsWith('...');
+    const san = (isBlack ? trimmed.slice(3) : trimmed).trim().replace(/[+#]/g, '');
+    return { san, isBlack };
+  },
+
+  runSearch() {
+    if (!this.opening) return;
+    const { san, isBlack } = this.parseSearchQuery(this.els.searchInput.value);
+    if (!san) { toast('Type a move to search for, e.g. dxe3 or ...dxe3'); return; }
+    const matches = [];
+    (function walk(node) {
+      node.children.forEach((c) => {
+        const blackMove = c.ply % 2 === 0;
+        if (blackMove === isBlack && c.san.replace(/[+#]/g, '') === san) matches.push(c);
+        walk(c);
+      });
+    }(this.opening.tree));
+    this.searchResults = matches.map((node) => ({ node, path: pathToNode(this.opening.tree, node.id) || [] }));
+    this.searchBoardPaths = this.searchResults.map((r) => r.path.slice());
+    this.renderSearchResults();
+  },
+
+  renderSearchResults() {
+    this.els.searchResultsWrap.hidden = false;
+    const n = this.searchResults.length;
+    this.els.searchResultsCount.textContent = n ? `${n} match${n === 1 ? '' : 'es'}` : 'No matches';
+    this.els.searchResultsList.innerHTML = '';
+    this.searchBoards = [];
+    if (!n) return;
+    const orientation = this.opening.color === 'black' ? 'b' : 'w';
+    this.searchResults.forEach((result, i) => {
+      const row = document.createElement('div');
+      row.className = 'study-search-result';
+      const info = document.createElement('div');
+      info.className = 'study-search-result-info';
+      info.textContent = this.breadcrumbFor(result.path);
+      row.appendChild(info);
+
+      const panel = document.createElement('div');
+      panel.className = 'study-board-panel study-search-board';
+      panel.innerHTML = `
+        <div class="study-board-header">
+          <span class="booklet-board-label">Result ${i + 1}</span>
+          <div class="study-board-nav">
+            <button type="button" class="btn btn-ghost tiny" data-act="prev" title="Previous move">&#9664;</button>
+            <button type="button" class="btn btn-ghost tiny" data-act="next" title="Next move">&#9654;</button>
+            <button type="button" class="btn btn-ghost tiny" data-act="reset" title="Back to this move">&#8634;</button>
+          </div>
+        </div>
+        <div class="board-mount board-mini" data-mount></div>
+        <div class="branch-menu" data-branch-menu hidden></div>
+        <p class="board-breadcrumb muted" data-breadcrumb></p>
+      `;
+      row.appendChild(panel);
+      this.els.searchResultsList.appendChild(row);
+
+      const board = new Board(panel.querySelector('[data-mount]'), { interactive: false });
+      board.orientation = orientation;
+      this.searchBoards.push(board);
+
+      panel.querySelector('[data-act="prev"]').addEventListener('click', () => this.stepSearchBoard(i, -1));
+      panel.querySelector('[data-act="next"]').addEventListener('click', (e) => this.stepSearchBoard(i, 1, e.currentTarget));
+      panel.querySelector('[data-act="reset"]').addEventListener('click', () => this.setSearchBoardPath(i, result.path.slice()));
+
+      this.renderSearchBoard(i);
+    });
+  },
+
+  renderSearchBoard(i) {
+    const node = resolvePath(this.opening.tree, this.searchBoardPaths[i]);
+    const board = this.searchBoards[i];
+    board.setPosition(node.fenAfter, board.orientation);
+    board.setLastMove(node.uci ? node.uci.slice(0, 2) : null, node.uci ? node.uci.slice(2, 4) : null);
+    const panel = this.els.searchResultsList.children[i].querySelector('.study-search-board');
+    panel.querySelector('[data-breadcrumb]').textContent = this.breadcrumbFor(this.searchBoardPaths[i]) || 'Starting position';
+  },
+
+  setSearchBoardPath(i, path) {
+    this.searchBoardPaths[i] = path;
+    this.renderSearchBoard(i);
+  },
+
+  stepSearchBoard(i, dir, anchorBtn) {
+    const path = this.searchBoardPaths[i];
+    if (dir < 0) {
+      if (!path.length) return;
+      this.setSearchBoardPath(i, path.slice(0, -1));
+      return;
+    }
+    const node = resolvePath(this.opening.tree, path);
+    if (!node.children.length) { toast('End of this line'); return; }
+    if (node.children.length === 1) { this.setSearchBoardPath(i, [...path, 0]); return; }
+    this.openSearchBranchMenu(i, node, anchorBtn);
+  },
+
+  openSearchBranchMenu(i, node, anchorBtn) {
+    const panel = this.els.searchResultsList.children[i].querySelector('.study-search-board');
+    const menu = panel.querySelector('[data-branch-menu]');
+    menu.innerHTML = '';
+    node.children.forEach((child, idx) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'branch-menu-item';
+      b.textContent = child.san + (child.markGlyph || '');
+      b.addEventListener('click', () => {
+        menu.hidden = true;
+        this.setSearchBoardPath(i, [...this.searchBoardPaths[i], idx]);
+      });
+      menu.appendChild(b);
+    });
+    menu.hidden = false;
+    const closeOnce = (e) => {
+      if (!menu.contains(e.target) && e.target !== anchorBtn) {
+        menu.hidden = true;
+        document.removeEventListener('mousedown', closeOnce);
+      }
+    };
+    setTimeout(() => document.addEventListener('mousedown', closeOnce), 0);
+  },
+
+  // Exports the search results list (each result's current board position,
+  // reflecting any prev/next adjustment) to A4 — same print infrastructure
+  // (print-eink class, @page a4-tree) the booklet's exports use.
+  exportSearchResults() {
+    if (!this.searchResults.length) { toast('No search results to export'); return; }
+    const root = document.getElementById('printRoot');
+    root.innerHTML = '';
+    root.classList.toggle('print-eink', !!(this.els.chkSearchEink && this.els.chkSearchEink.checked));
+
+    const page = document.createElement('div');
+    page.className = 'print-page print-full-tree-page';
+    const title = document.createElement('div');
+    title.className = 'print-page-title';
+    title.textContent = `Search "${this.els.searchInput.value.trim()}" — ${this.opening.color === 'white' ? 'White' : 'Black'} · ${this.opening.name}`;
+    page.appendChild(title);
+
+    const list = document.createElement('div');
+    list.className = 'print-search-list';
+    this.searchResults.forEach((result, i) => {
+      const item = document.createElement('div');
+      item.className = 'print-search-item';
+      const info = document.createElement('div');
+      info.className = 'print-search-item-info';
+      info.textContent = this.breadcrumbFor(this.searchBoardPaths[i]) || this.breadcrumbFor(result.path);
+      item.appendChild(info);
+      const boardWrap = document.createElement('div');
+      boardWrap.className = 'print-search-item-board';
+      const mount = document.createElement('div');
+      mount.className = 'board-mount';
+      boardWrap.appendChild(mount);
+      item.appendChild(boardWrap);
+      const board = new Board(mount, { interactive: false });
+      board.orientation = this.opening.color === 'black' ? 'b' : 'w';
+      const posNode = resolvePath(this.opening.tree, this.searchBoardPaths[i]);
+      board.setPosition(posNode.fenAfter, board.orientation);
+      board.setLastMove(posNode.uci ? posNode.uci.slice(0, 2) : null, posNode.uci ? posNode.uci.slice(2, 4) : null);
+      list.appendChild(item);
+    });
+    page.appendChild(list);
+    root.appendChild(page);
+    setTimeout(() => window.print(), 50);
+  },
+
   async openBoardNameEditor(i) {
     const headingTexts = this.opening ? collectHeadingNodes(this.opening.tree).map((n) => n.heading) : [];
     const result = await modalBoardName(this.boardNames[i], headingTexts);
@@ -236,6 +421,7 @@ const Study = {
     const keepId = this.opening ? this.opening.id : null;
     this.populateSelect({ preserveId: keepId });
     if (this.opening) this.renderTreePane();
+    if (this.opening && this.searchResults.length) this.renderSearchResults();
   },
 
   populateSelect(opts = {}) {
@@ -255,6 +441,7 @@ const Study = {
     const has = !!this.opening;
     this.els.empty.hidden = has;
     this.els.workspace.hidden = !has;
+    this.els.searchPanel.hidden = !has;
   },
 
   async selectOpening(id) {
@@ -278,6 +465,12 @@ const Study = {
     this.activeBoardIdx = 0;
     this.dirty = false;
     this.updateSaveStatus();
+
+    this.searchResults = [];
+    this.searchBoardPaths = [];
+    this.searchBoards = [];
+    this.els.searchInput.value = '';
+    this.els.searchResultsWrap.hidden = true;
 
     this.renderTreePane();
     this.rebuildBoards();

@@ -181,6 +181,26 @@
       </div>
     </div>
 
+    <div id="studySearchPanel" class="panel study-search-panel" hidden>
+      <h3 class="panel-title small-title">Search a move</h3>
+      <p class="muted small-note">White's move: e.g. "dxe3". Black's move: prefix with "...", e.g. "...dxe3".</p>
+      <div class="study-search-bar">
+        <input type="text" id="studySearchInput" placeholder="e.g. dxe3 or ...dxe3" />
+        <button id="btnStudySearch" type="button" class="btn btn-primary small">Search</button>
+      </div>
+      <div id="studySearchResults" class="study-search-results" hidden>
+        <div class="study-search-results-header">
+          <span class="muted" id="studySearchResultsCount"></span>
+          <label class="booklet-eink-toggle">
+            <input type="checkbox" id="chkStudySearchEink" />
+            E-ink friendly boards
+          </label>
+          <button id="btnExportSearchResults" type="button" class="btn btn-ghost tiny">Export to PDF (A4)</button>
+        </div>
+        <div id="studySearchResultsList" class="study-search-results-list"></div>
+      </div>
+    </div>
+
     <!-- BOOKLET MODE -->
     <div id="bookletWorkspace" class="booklet-layout" hidden>
       <aside class="panel booklet-index">
