@@ -515,6 +515,8 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   border-radius: var(--radius);
 }
 .study-search-result-info { flex: 1; font-size: 14px; color: var(--ink); padding-top: 6px; }
+.study-search-result-headings { font-size: 13px; font-weight: 600; color: var(--heading); margin-bottom: 4px; }
+.study-search-result-moves { color: var(--ink); }
 .study-search-board { width: 220px; flex-shrink: 0; }
 
 /* ---------- modal ---------- */
@@ -768,6 +770,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
   .print-search-list { display: flex; flex-direction: column; gap: 4mm; }
   .print-search-item { display: flex; align-items: center; gap: 5mm; break-inside: avoid; }
   #printRoot .print-search-item-info { flex: 1; font-size: 9pt; }
+  #printRoot .print-search-item-headings { font-size: 9pt; font-weight: 700; color: var(--heading); margin-bottom: 1mm; }
   .print-search-item-board { width: 32mm; flex-shrink: 0; }
   .print-search-item-board .board { max-width: 100%; border: 0.3mm solid #999; }
   .print-search-item-board .coord { display: none; }
@@ -778,6 +781,7 @@ input[type="file"] { width: 100%; font-size: 13px; color: var(--ink-soft); }
      grayscale extremes reads far better on e-ink displays. */
   #printRoot.print-eink .square.dark { background: #d9d9d9; }
   #printRoot.print-eink .square.light { background: #fff; }
+  #printRoot.print-eink .print-search-item-headings { color: #000; }
 }
 
 @media (max-width: 980px) {

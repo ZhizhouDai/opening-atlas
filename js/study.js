@@ -234,7 +234,11 @@ const Study = {
         walk(c);
       });
     }(this.opening.tree));
-    this.searchResults = matches.map((node) => ({ node, path: pathToNode(this.opening.tree, node.id) || [] }));
+    this.searchResults = matches.map((node) => ({
+      node,
+      path: pathToNode(this.opening.tree, node.id) || [],
+      headings: headingChainFor(this.opening.tree, node).map((h) => h.heading),
+    }));
     this.searchBoardPaths = this.searchResults.map((r) => r.path.slice());
     this.renderSearchResults();
   },
@@ -252,7 +256,16 @@ const Study = {
       row.className = 'study-search-result';
       const info = document.createElement('div');
       info.className = 'study-search-result-info';
-      info.textContent = this.breadcrumbFor(result.path);
+      if (result.headings.length) {
+        const headingsEl = document.createElement('div');
+        headingsEl.className = 'study-search-result-headings';
+        headingsEl.textContent = result.headings.join(' › ');
+        info.appendChild(headingsEl);
+      }
+      const moves = document.createElement('div');
+      moves.className = 'study-search-result-moves';
+      moves.textContent = this.breadcrumbFor(result.path);
+      info.appendChild(moves);
       row.appendChild(info);
 
       const panel = document.createElement('div');
@@ -360,7 +373,15 @@ const Study = {
       item.className = 'print-search-item';
       const info = document.createElement('div');
       info.className = 'print-search-item-info';
-      info.textContent = this.breadcrumbFor(this.searchBoardPaths[i]) || this.breadcrumbFor(result.path);
+      if (result.headings.length) {
+        const headingsEl = document.createElement('div');
+        headingsEl.className = 'print-search-item-headings';
+        headingsEl.textContent = result.headings.join(' › ');
+        info.appendChild(headingsEl);
+      }
+      const moves = document.createElement('div');
+      moves.textContent = this.breadcrumbFor(this.searchBoardPaths[i]) || this.breadcrumbFor(result.path);
+      info.appendChild(moves);
       item.appendChild(info);
       const boardWrap = document.createElement('div');
       boardWrap.className = 'print-search-item-board';
