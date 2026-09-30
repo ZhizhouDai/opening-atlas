@@ -492,10 +492,14 @@ const Booklet = {
   // booklet spread, for when you want the whole repertoire at a glance.
   // Followed by a diagram sheet (see buildDiagramsPage) covering every key
   // branching point.
-  exportFullTree(opening) {
+  //
+  // einkOverride, when passed (e.g. by Study's own "export without entering
+  // Booklet mode" buttons), is used instead of reading Booklet's own
+  // checkbox — its UI isn't necessarily open when this is called.
+  exportFullTree(opening, einkOverride) {
     const root = document.getElementById('printRoot');
     root.innerHTML = '';
-    this.applyEinkMode();
+    this.applyEinkMode(einkOverride);
     const page = document.createElement('div');
     page.className = 'print-page print-full-tree-page';
     const title = document.createElement('div');
@@ -516,12 +520,12 @@ const Booklet = {
 
   // Just the diagram sheet, no notation — for when you want a compact
   // visual reference of the repertoire's branching points on their own.
-  exportDiagramsOnly(opening) {
+  exportDiagramsOnly(opening, einkOverride) {
     const diagramsPage = this.buildDiagramsPage(opening);
     if (!diagramsPage) { toast('No headings yet — right-click a move to label one first.'); return; }
     const root = document.getElementById('printRoot');
     root.innerHTML = '';
-    this.applyEinkMode();
+    this.applyEinkMode(einkOverride);
     root.appendChild(diagramsPage);
     setTimeout(() => window.print(), 50);
   },
@@ -567,8 +571,12 @@ const Booklet = {
   // Toggles the light-gray-dark-squares variant used for e-ink displays,
   // per the "E-ink friendly boards" checkbox — applied to #printRoot itself
   // so it covers every export (per-line booklet, full tree, diagrams only).
-  applyEinkMode() {
-    document.getElementById('printRoot').classList.toggle('print-eink', !!(this.els.chkEink && this.els.chkEink.checked));
+  // `forceEink`, when a boolean is passed, wins over reading the checkbox
+  // (used when a caller outside Booklet's own UI, like Study's export
+  // buttons, already knows the eink state it wants).
+  applyEinkMode(forceEink) {
+    const eink = typeof forceEink === 'boolean' ? forceEink : !!(this.els.chkEink && this.els.chkEink.checked);
+    document.getElementById('printRoot').classList.toggle('print-eink', eink);
   },
 
   buildPrintDocument(targets) {

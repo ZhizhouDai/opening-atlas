@@ -188,14 +188,19 @@
         <input type="text" id="studySearchInput" placeholder="e.g. dxe3 or ...dxe3" />
         <button id="btnStudySearch" type="button" class="btn btn-primary small">Search</button>
       </div>
+      <div class="study-export-row">
+        <span class="muted small-note">Export the opening open above (no need for Booklet mode):</span>
+        <button id="btnExportFullTree" type="button" class="btn btn-ghost small" disabled>Full tree (A4)</button>
+        <button id="btnExportDiagramsOnly" type="button" class="btn btn-ghost small" disabled>Diagrams only (A4)</button>
+        <label class="booklet-eink-toggle">
+          <input type="checkbox" id="chkStudyEink" />
+          E-ink friendly boards
+        </label>
+      </div>
       <div id="studySearchResults" class="study-search-results" hidden>
         <div class="study-search-results-header">
           <span class="muted" id="studySearchResultsCount"></span>
-          <label class="booklet-eink-toggle">
-            <input type="checkbox" id="chkStudySearchEink" />
-            E-ink friendly boards
-          </label>
-          <button id="btnExportSearchResults" type="button" class="btn btn-ghost tiny">Export to PDF (A4)</button>
+          <button id="btnExportSearchResults" type="button" class="btn btn-ghost tiny">Export search results to PDF (A4)</button>
         </div>
         <div id="studySearchResultsList" class="study-search-results-list"></div>
       </div>

@@ -84,14 +84,21 @@ on your PC gives you two separate, independent libraries.
   prefixed with "...", e.g. "...dxe3" — to find every occurrence across
   *every* repertoire you have, both colors (a black repertoire's tree still
   records White's moves too, so search is never limited to the opening
-  currently open). Results show as a list, each labeled with which
-  repertoire it's from and the line's own heading/subheading chain (if it
-  has one) above the move breadcrumb, and with its own small interactive
-  board (independent ◀ / ▶ / reset) so you can step forward or back from
-  that point without disturbing the main boards. Export the results list
-  (each board's current, possibly-stepped position) to an A4 PDF, with the
-  same e-ink friendly option (light gray/white squares) as the booklet
-  exports.
+  currently open). The search bar itself is visible as soon as you have any
+  repertoire, even before picking one from the dropdown above — and search
+  results stay put if you do pick one afterward. Results show as a list,
+  each labeled with which repertoire it's from and the line's own
+  heading/subheading chain (if it has one) above the move breadcrumb, and
+  with its own small interactive board (independent ◀ / ▶ / reset) so you
+  can step forward or back from that point without disturbing the main
+  boards. Export the results list (each board's current, possibly-stepped
+  position) to an A4 PDF, with the same e-ink friendly option (light
+  gray/white squares) as the booklet exports.
+- **Export without Booklet mode**: "Full tree (A4)" and "Diagrams only
+  (A4)" — the same two exports available per-opening in the booklet
+  index — are also right there next to the search bar, for the opening
+  currently open above, sharing the same e-ink checkbox as the search
+  export.
 
 ### Booklet mode
 

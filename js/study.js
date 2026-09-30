@@ -47,8 +47,10 @@ const Study = {
       searchResultsWrap: document.getElementById('studySearchResults'),
       searchResultsCount: document.getElementById('studySearchResultsCount'),
       searchResultsList: document.getElementById('studySearchResultsList'),
-      chkSearchEink: document.getElementById('chkStudySearchEink'),
       btnExportSearchResults: document.getElementById('btnExportSearchResults'),
+      btnExportFullTree: document.getElementById('btnExportFullTree'),
+      btnExportDiagramsOnly: document.getElementById('btnExportDiagramsOnly'),
+      chkEink: document.getElementById('chkStudyEink'),
     };
 
     this.els.colorTabs.addEventListener('click', (e) => {
@@ -65,6 +67,8 @@ const Study = {
     this.els.btnSearch.addEventListener('click', () => this.runSearch());
     this.els.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.runSearch(); });
     this.els.btnExportSearchResults.addEventListener('click', () => this.exportSearchResults());
+    this.els.btnExportFullTree.addEventListener('click', () => this.exportOpeningFullTree());
+    this.els.btnExportDiagramsOnly.addEventListener('click', () => this.exportOpeningDiagrams());
 
     await this.loadOpenings();
   },
@@ -371,7 +375,7 @@ const Study = {
     if (!this.searchResults.length) { toast('No search results to export'); return; }
     const root = document.getElementById('printRoot');
     root.innerHTML = '';
-    root.classList.toggle('print-eink', !!(this.els.chkSearchEink && this.els.chkSearchEink.checked));
+    root.classList.toggle('print-eink', !!(this.els.chkEink && this.els.chkEink.checked));
 
     const page = document.createElement('div');
     page.className = 'print-page print-full-tree-page';
@@ -419,6 +423,20 @@ const Study = {
     setTimeout(() => window.print(), 50);
   },
 
+  // Reuse Booklet's own export logic directly on the currently loaded
+  // opening — no need to open Booklet mode just to print the full tree or
+  // its branching-point diagrams. Shares this page's own e-ink checkbox
+  // rather than Booklet's (its UI isn't necessarily open).
+  exportOpeningFullTree() {
+    if (!this.opening) return;
+    Booklet.exportFullTree(this.opening, this.els.chkEink.checked);
+  },
+
+  exportOpeningDiagrams() {
+    if (!this.opening) return;
+    Booklet.exportDiagramsOnly(this.opening, this.els.chkEink.checked);
+  },
+
   async openBoardNameEditor(i) {
     const headingTexts = this.opening ? collectHeadingNodes(this.opening.tree).map((n) => n.heading) : [];
     const result = await modalBoardName(this.boardNames[i], headingTexts);
@@ -447,6 +465,7 @@ const Study = {
 
   async loadOpenings() {
     this.openings = await DB.openings.getAll();
+    this.updateSearchPanelVisibility();
     this.setColor('white');
   },
 
@@ -457,10 +476,18 @@ const Study = {
   // to this page always shows the latest saved state.
   async refreshOpenings() {
     this.openings = await DB.openings.getAll();
+    this.updateSearchPanelVisibility();
     const keepId = this.opening ? this.opening.id : null;
     this.populateSelect({ preserveId: keepId });
     if (this.opening) this.renderTreePane();
-    if (this.opening && this.searchResults.length) this.renderSearchResults();
+    if (this.searchResults.length) this.renderSearchResults();
+  },
+
+  // The search bar (and full-tree/diagrams export) work across every
+  // repertoire and don't need a specific opening selected — only hidden
+  // when there's nothing at all to search yet.
+  updateSearchPanelVisibility() {
+    this.els.searchPanel.hidden = this.openings.length === 0;
   },
 
   populateSelect(opts = {}) {
@@ -480,7 +507,8 @@ const Study = {
     const has = !!this.opening;
     this.els.empty.hidden = has;
     this.els.workspace.hidden = !has;
-    this.els.searchPanel.hidden = !has;
+    this.els.btnExportFullTree.disabled = !has;
+    this.els.btnExportDiagramsOnly.disabled = !has;
   },
 
   async selectOpening(id) {
@@ -504,12 +532,6 @@ const Study = {
     this.activeBoardIdx = 0;
     this.dirty = false;
     this.updateSaveStatus();
-
-    this.searchResults = [];
-    this.searchBoardPaths = [];
-    this.searchBoards = [];
-    this.els.searchInput.value = '';
-    this.els.searchResultsWrap.hidden = true;
 
     this.renderTreePane();
     this.rebuildBoards();
