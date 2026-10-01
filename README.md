@@ -36,7 +36,9 @@ on your PC gives you two separate, independent libraries.
 - The same right-click editor can also give a move a short free-text
   **label** (e.g. "TN", "Trap") shown inline right next to it — unlike a
   heading, a label never starts a new line and isn't part of the outline or
-  booklet index, just a quick personal tag.
+  booklet index, just a quick personal tag. The label field suggests labels
+  you've already used elsewhere (via native autocomplete), so the same tag
+  stays spelled consistently across your repertoires.
 - Export PGN: copy the current opening to the clipboard, download it as a
   `.pgn` file, or download every opening for the selected color as one
   multi-game PGN file.
@@ -80,20 +82,22 @@ on your PC gives you two separate, independent libraries.
   any of six colors — and add a free-text note. All of it (board count,
   which position each board shows, every arrow/circle/note/heading) is kept
   in memory until you hit **Save**, which persists it for next time.
-- **Search a move**: type a SAN move — White's, e.g. "dxe3", or Black's
-  prefixed with "...", e.g. "...dxe3" — to find every occurrence across
-  *every* repertoire you have, both colors (a black repertoire's tree still
-  records White's moves too, so search is never limited to the opening
-  currently open). The search bar itself is visible as soon as you have any
-  repertoire, even before picking one from the dropdown above — and search
-  results stay put if you do pick one afterward. Results show as a list,
-  each labeled with which repertoire it's from and the line's own
-  heading/subheading chain (if it has one) above the move breadcrumb, and
-  with its own small interactive board (independent ◀ / ▶ / reset) so you
-  can step forward or back from that point without disturbing the main
-  boards. Export the results list (each board's current, possibly-stepped
-  position) to an A4 PDF, with the same e-ink friendly option (light
-  gray/white squares) as the booklet exports.
+- **Search a move or label**: type a SAN move — White's, e.g. "dxe3", or
+  Black's prefixed with "...", e.g. "...dxe3" — to find every occurrence
+  across *every* repertoire you have, both colors (a black repertoire's
+  tree still records White's moves too, so search is never limited to the
+  opening currently open). Prefix with "#" instead to filter by ply label —
+  "#TN" finds every move whose label contains "TN", case-insensitive. The
+  search bar itself is visible as soon as you have any repertoire, even
+  before picking one from the dropdown above — and search results stay put
+  if you do pick one afterward. Results show as a list, each labeled with
+  which repertoire it's from, the line's own heading/subheading chain (if
+  it has one), and the move's own label (if it has one) above/beside the
+  move breadcrumb, and with its own small interactive board (independent
+  ◀ / ▶ / reset) so you can step forward or back from that point without
+  disturbing the main boards. Export the results list (each board's
+  current, possibly-stepped position) to an A4 PDF, with the same e-ink
+  friendly option (light gray/white squares) as the booklet exports.
 - **Export without Booklet mode**: "Full tree (A4)" and "Diagrams only
   (A4)" — the same two exports available per-opening in the booklet
   index — are also right there next to the search bar, for the opening

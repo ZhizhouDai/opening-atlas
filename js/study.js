@@ -218,12 +218,17 @@ const Study = {
   // "dxe3" means White played it (odd ply); "...dxe3" means Black played it
   // (even ply) — same convention the notation itself uses for move labels.
   // +/# are stripped from both the query and each candidate so "dxe3" also
-  // matches a stored "dxe3+".
+  // matches a stored "dxe3+". A query starting with "#" instead filters by
+  // ply label (a substring, case-insensitive) rather than by move — e.g.
+  // "#TN" finds every move labeled with something containing "TN".
   parseSearchQuery(raw) {
     const trimmed = raw.trim();
+    if (trimmed.startsWith('#')) {
+      return { mode: 'label', label: trimmed.slice(1).trim().toLowerCase() };
+    }
     const isBlack = trimmed.startsWith('...');
     const san = (isBlack ? trimmed.slice(3) : trimmed).trim().replace(/[+#]/g, '');
-    return { san, isBlack };
+    return { mode: 'move', san, isBlack };
   },
 
   // Searches every opening in the collection (both colors), not just the
@@ -231,8 +236,9 @@ const Study = {
   // moves too, so this is never scoped by the searched move's own color.
   runSearch() {
     if (!this.openings.length) { toast('No repertoires yet'); return; }
-    const { san, isBlack } = this.parseSearchQuery(this.els.searchInput.value);
-    if (!san) { toast('Type a move to search for, e.g. dxe3 or ...dxe3'); return; }
+    const parsed = this.parseSearchQuery(this.els.searchInput.value);
+    if (parsed.mode === 'label' && !parsed.label) { toast('Type a label to search for, e.g. #TN'); return; }
+    if (parsed.mode === 'move' && !parsed.san) { toast('Type a move to search for, e.g. dxe3 or ...dxe3'); return; }
     const byColor = { white: [], black: [] };
     this.openings.forEach((o) => byColor[o.color].push(o));
     const orderedOpenings = ['white', 'black'].flatMap((color) => byColor[color].sort((a, b) => a.name.localeCompare(b.name)));
@@ -241,8 +247,10 @@ const Study = {
     orderedOpenings.forEach((opening) => {
       (function walk(node) {
         node.children.forEach((c) => {
-          const blackMove = c.ply % 2 === 0;
-          if (blackMove === isBlack && c.san.replace(/[+#]/g, '') === san) matches.push({ opening, node: c });
+          const isMatch = parsed.mode === 'label'
+            ? !!(c.label && c.label.toLowerCase().includes(parsed.label))
+            : (c.ply % 2 === 0) === parsed.isBlack && c.san.replace(/[+#]/g, '') === parsed.san;
+          if (isMatch) matches.push({ opening, node: c });
           walk(c);
         });
       }(opening.tree));
@@ -282,6 +290,12 @@ const Study = {
       const moves = document.createElement('div');
       moves.className = 'study-search-result-moves';
       moves.textContent = this.breadcrumbFor(result.path, result.opening.tree);
+      if (result.node.label) {
+        const labelTag = document.createElement('span');
+        labelTag.className = 'ply-label study-search-result-label';
+        labelTag.textContent = result.node.label;
+        moves.appendChild(labelTag);
+      }
       info.appendChild(moves);
       row.appendChild(info);
 
@@ -403,6 +417,7 @@ const Study = {
       }
       const moves = document.createElement('div');
       moves.textContent = this.breadcrumbFor(this.searchBoardPaths[i], result.opening.tree) || this.breadcrumbFor(result.path, result.opening.tree);
+      if (result.node.label) moves.textContent += '  [' + result.node.label + ']';
       info.appendChild(moves);
       item.appendChild(info);
       const boardWrap = document.createElement('div');
@@ -580,6 +595,7 @@ const Study = {
     const result = await modalPlyStyleEditor(existing, {
       canMoveUp: idx > 0,
       canMoveDown: parent ? idx < parent.children.length - 1 : false,
+      existingLabels: collectAllLabels(this.openings),
     });
     if (result === undefined) return;
     if (result && result.reorder) {

@@ -51,6 +51,9 @@ function modalPrompt(message, defaultValue) {
 //
 // opts: { canMoveUp, canMoveDown } — whether a sibling exists in that
 // direction; the "Order" section is omitted entirely when neither applies.
+// opts.existingLabels: string[] — distinct labels already used elsewhere
+// (see collectAllLabels), offered as native autocomplete suggestions while
+// typing a new one, so the same short tag stays spelled consistently.
 function modalPlyStyleEditor(existing, opts = {}) {
   return new Promise((resolve) => {
     const { overlay, box } = _buildOverlay();
@@ -62,7 +65,8 @@ function modalPlyStyleEditor(existing, opts = {}) {
       <p class="modal-section-label">Comment after this move</p>
       <textarea class="modal-input" data-field="commentAfter" rows="2" placeholder="e.g. Better is … here."></textarea>
       <p class="modal-section-label">Label (shown inline next to the move)</p>
-      <input type="text" class="modal-input" data-field="label" placeholder="e.g. &quot;TN&quot;, &quot;Trap&quot;" />
+      <input type="text" class="modal-input" data-field="label" placeholder="e.g. &quot;TN&quot;, &quot;Trap&quot;" list="modalLabelSuggestions" autocomplete="off" />
+      <datalist id="modalLabelSuggestions"></datalist>
       <p class="modal-section-label">Heading</p>
       <input type="text" class="modal-input" data-field="heading" placeholder="Heading text, e.g. &quot;Schmidt Variation&quot;" />
       <div class="modal-btn-row">
@@ -104,6 +108,12 @@ function modalPlyStyleEditor(existing, opts = {}) {
     commentBeforeInput.value = existing ? existing.commentBefore || '' : '';
     commentAfterInput.value = existing ? existing.commentAfter || '' : '';
     labelInput.value = existing ? existing.label || '' : '';
+    const labelDatalist = box.querySelector('#modalLabelSuggestions');
+    (opts.existingLabels || []).forEach((l) => {
+      const opt = document.createElement('option');
+      opt.value = l;
+      labelDatalist.appendChild(opt);
+    });
     let level = existing && existing.level === 3 ? 3 : existing && existing.level === 2 ? 2 : 1;
     let bold = !!(existing && existing.bold);
     let boxed = !!(existing && existing.boxed);

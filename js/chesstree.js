@@ -198,6 +198,22 @@ function collectHeadingNodes(root) {
   return list;
 }
 
+// Every distinct, non-empty ply label used anywhere across `openings`
+// (typically the whole collection, not just one opening — labels are a
+// reusable personal tagging convention), alphabetical — used to suggest
+// existing labels while typing a new one in modalPlyStyleEditor, and to
+// let the Study search bar filter by label.
+function collectAllLabels(openings) {
+  const set = new Set();
+  openings.forEach((opening) => {
+    (function walk(node) {
+      if (node.label) set.add(node.label);
+      node.children.forEach(walk);
+    }(opening.tree));
+  });
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 // Follows the mainline (first child, repeatedly) from `node` down to a leaf
 // — the "ending position" a named line eventually reaches.
 function mainlineLeaf(node) {

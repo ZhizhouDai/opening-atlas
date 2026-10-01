@@ -211,6 +211,7 @@ const Repertoire = {
     const result = await modalPlyStyleEditor(existing, {
       canMoveUp: idx > 0,
       canMoveDown: parent ? idx < parent.children.length - 1 : false,
+      existingLabels: collectAllLabels(this.openings),
     });
     if (result === undefined) return;
     if (result && result.reorder) {
